@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  body {
+    background: linear-gradient(135deg, #e0e7ff 0%, #f0fdfa 100%);
+    min-height: 100vh;
+  }
+  .modern-card {
+    border-radius: 1.5rem;
+    background: #fff;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    border: none;
+    padding: 2.5rem 2rem;
+  }
+  .modern-title {
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #3b82f6;
+    margin-bottom: 2rem;
+  }
+  .form-label {
+    color: #374151;
+    font-size: 1.05rem;
+  }
+  .form-control-lg {
+    border-radius: 0.75rem;
+    border: 1.5px solid #dbeafe;
+    background: #f8fafc;
+    transition: border-color 0.2s;
+  }
+  .form-control-lg:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px #93c5fd55;
+    background: #fff;
+  }
+  .btn-primary {
+    background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%);
+    border: none;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 16px 0 #3b82f633;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+  .btn-primary:hover {
+    background: linear-gradient(90deg, #2563eb 0%, #0ea5e9 100%);
+    box-shadow: 0 6px 24px 0 #3b82f655;
+  }
+</style>
+<div class="container d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+  <div class="modern-card w-100" style="max-width: 520px;">
+    <h2 class="modern-title text-center">Add Patient</h2>
+    <form method="POST" autocomplete="off">
+      {{ form.hidden_tag() }}
+      <div class="mb-3">
+        {{ form.name.label(class="form-label fw-semibold") }}
+        {{ form.name(class="form-control form-control-lg") }}
+      </div>
+      <div class="mb-3">
+        {{ form.phone.label(class="form-label fw-semibold") }}
+        {{ form.phone(class="form-control form-control-lg") }}
+      </div>
+      <div class="mb-3">
+        {{ form.age.label(class="form-label fw-semibold") }}
+        {{ form.age(class="form-control form-control-lg") }}
+      </div>
+      <div class="mb-3">
+        {{ form.diagnosis.label(class="form-label fw-semibold") }}
+        {{ form.diagnosis(class="form-control form-control-lg") }}
+      </div>
+      <div class="d-grid mt-4">
+        {{ form.submit(class="btn btn-primary btn-lg") }}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
