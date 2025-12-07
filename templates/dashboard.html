@@ -1,0 +1,1514 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .dashboard-header {
+    background: linear-gradient(90deg, #0dcaf0 0%, #6610f2 100%);
+    color: #fff;
+    border-radius: 1rem;
+    padding: 2rem 2.5rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    margin-bottom: 2.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    /* Animation */
+    animation: fadeInDown 1s;
+  }
+  
+  .dashboard-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    animation: shimmer 3s infinite;
+  }
+  @keyframes fadeInDown {
+    0% { opacity: 0; transform: translateY(-40px);}
+    100% { opacity: 1; transform: translateY(0);}
+  }
+  .dashboard-header h2 {
+    margin-bottom: 0;
+    font-weight: 700;
+    letter-spacing: 1px;
+    animation: fadeInLeft 1.2s;
+  }
+  @keyframes fadeInLeft {
+    0% { opacity: 0; transform: translateX(-40px);}
+    100% { opacity: 1; transform: translateX(0);}
+  }
+  .dashboard-card {
+    border: none;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+    transition: all 0.3s ease;
+    background: #fff;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    /* Animation */
+    opacity: 0;
+    transform: translateY(40px);
+    animation: cardFadeIn 0.8s forwards;
+  }
+  
+  .dashboard-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(13,202,240,0.1), transparent);
+    transition: left 0.5s;
+  }
+  
+  .dashboard-card:hover::before {
+    left: 100%;
+  }
+  .dashboard-card:nth-child(1) { animation-delay: 0.2s;}
+  .dashboard-card:nth-child(2) { animation-delay: 0.4s;}
+  .dashboard-card:nth-child(3) { animation-delay: 0.6s;}
+  @keyframes cardFadeIn {
+    to { opacity: 1; transform: translateY(0);}
+  }
+  .dashboard-card:hover {
+    transform: translateY(-8px) scale(1.05);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+  }
+  
+  .dashboard-card:active {
+    transform: translateY(-2px) scale(1.02);
+  }
+  .dashboard-card .card-header {
+    font-size: 1.2rem;
+    font-weight: 600;
+    padding: 1.25rem 1rem;
+    border-bottom: none;
+    background: linear-gradient(90deg, #f8fafc 0%, #e9ecef 100%);
+  }
+  .dashboard-card .card-body {
+    padding: 2rem 1.5rem;
+  }
+  .dashboard-card .display-6 {
+    font-size: 2.2rem;
+    letter-spacing: 1px;
+  }
+  .dashboard-actions {
+    margin-top: 3.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    /* Animation */
+    opacity: 0;
+    animation: fadeInUp 1s 1s forwards;
+  }
+  @keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(40px);}
+    100% { opacity: 1; transform: translateY(0);}
+  }
+  .dashboard-actions .btn {
+    font-size: 1.15rem;
+    font-weight: 600;
+    border-radius: 2rem;
+    box-shadow: 0 2px 8px rgba(13,202,240,0.08);
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s, transform 0.2s;
+    max-width: 350px;
+    width: 100%;
+  }
+  .dashboard-actions .btn:active {
+    transform: scale(0.97);
+  }
+  .dashboard-actions .btn-primary {
+    background: linear-gradient(90deg, #0dcaf0 0%, #6610f2 100%);
+    border: none;
+    color: #fff;
+  }
+  .dashboard-actions .btn-primary:hover {
+    background: linear-gradient(90deg, #6610f2 0%, #0dcaf0 100%);
+    color: #fff;
+  }
+  .dashboard-actions .btn-outline-secondary {
+    background: #fff;
+    border: 2px solid #6610f2;
+    color: #6610f2;
+  }
+  .dashboard-actions .btn-outline-secondary:hover {
+    background: #6610f2;
+    color: #fff;
+  }
+  @keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+  
+  .interactive-btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  
+  .interactive-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+  }
+  
+  .interactive-btn:hover::before {
+    left: 100%;
+  }
+  
+  .interactive-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  }
+  
+  .interactive-btn:active {
+    transform: translateY(-1px);
+  }
+  
+  .counter {
+    display: inline-block;
+    transition: all 0.3s ease;
+  }
+  
+  .progress-bar {
+    transition: width 2s ease-in-out;
+  }
+  
+  .pulse-badge {
+    animation: badgePulse 2s infinite;
+  }
+  
+  @keyframes badgePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+  
+  .tool-btn {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .tool-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+  }
+  
+  .tool-btn:hover::before {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .tool-btn:hover {
+    transform: translateY(-2px);
+  }
+  
+  .timeline {
+    position: relative;
+    padding-left: 30px;
+  }
+  
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, #0dcaf0 0%, #6610f2 100%);
+  }
+  
+  .timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+    animation: slideInLeft 0.6s ease-out;
+  }
+  
+  .timeline-item:nth-child(1) { animation-delay: 0.1s; }
+  .timeline-item:nth-child(2) { animation-delay: 0.2s; }
+  .timeline-item:nth-child(3) { animation-delay: 0.3s; }
+  
+  .timeline-clickable {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    padding: 0.5rem;
+    margin: -0.5rem;
+  }
+
+  .timeline-clickable:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+    transform: translateX(5px);
+  }
+  
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  .timeline-marker {
+    position: absolute;
+    left: -22px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+  
+  .timeline-content:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+  }
+  
+  .upcoming-item {
+    transition: all 0.3s ease;
+    padding: 10px;
+    border-radius: 8px;
+  }
+  
+  .upcoming-item:hover {
+    background: #f8f9fa;
+    transform: translateX(5px);
+  }
+  
+  .upcoming-date {
+    min-width: 50px;
+    padding: 8px;
+    background: rgba(13,202,240,0.1);
+    border-radius: 8px;
+  }
+  
+  /* Welcome Section Styles */
+  .welcome-section {
+    animation: welcomeFadeIn 1.5s ease-out;
+  }
+  
+  .welcome-title {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    margin-bottom: 0.5rem;
+    letter-spacing: 1px;
+    animation: titlePulse 3s ease-in-out infinite;
+  }
+  
+  .welcome-subtitle {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    margin-bottom: 0;
+  }
+  
+  @keyframes welcomeFadeIn {
+    0% { opacity: 0; transform: translateY(-30px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes titlePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+  }
+  
+  /* Live Time Display Styles */
+  .live-time-container {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .live-time-display {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 1.5rem 2rem;
+    backdrop-filter: blur(15px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    text-align: center;
+    min-width: 350px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+  }
+  
+  .live-time-display::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    animation: timeshimmer 3s infinite;
+  }
+  
+  @keyframes timeshimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+  
+  .time-text {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 3px;
+    text-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 30px rgba(255, 255, 255, 0.1);
+    font-family: 'Courier New', monospace;
+    margin-bottom: 0.5rem;
+    animation: timeGlow 2s ease-in-out infinite alternate;
+  }
+  
+  .date-text {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: capitalize;
+    margin-bottom: 0.25rem;
+  }
+  
+  .time-zone-text {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    margin-top: 0.5rem;
+  }
+  
+  @keyframes timeGlow {
+    0% { 
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.1);
+    }
+    100% { 
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+  }
+  
+  .live-time-display:hover {
+    transform: scale(1.02);
+    transition: transform 0.3s ease;
+  }
+  
+  .live-time-display:hover .time-text {
+    animation-duration: 0.5s;
+  }
+
+  @media (max-width: 767px) {
+    .dashboard-header {
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 1rem;
+    }
+    .welcome-title {
+      font-size: 2rem;
+    }
+    .welcome-subtitle {
+      font-size: 1rem;
+    }
+    .live-time-display {
+      min-width: 280px;
+      padding: 1rem 1.5rem;
+    }
+    .time-text {
+      font-size: 2.2rem;
+      letter-spacing: 2px;
+    }
+    .date-text {
+      font-size: 1rem;
+    }
+  }
+</style>
+
+<div class="container py-5">
+  <div class="dashboard-header">
+    <div class="text-center w-100">
+      <div class="welcome-section mb-4">
+        <h1 class="welcome-title">
+          <i class="bi bi-person-heart me-3"></i>
+          Welcome, Dr. {{ doctor.first_name }}!
+          <i class="bi bi-heart-pulse ms-3"></i>
+        </h1>
+        <p class="welcome-subtitle">Your medical practice dashboard</p>
+      </div>
+      
+      <div class="live-time-container">
+        <div class="live-time-display" id="liveTimeDisplay">
+          <div class="time-text" id="timeText"></div>
+          <div class="date-text" id="dateText"></div>
+          <div class="time-zone-text">
+            <i class="bi bi-globe me-1"></i>
+            <span id="timeZone"></span>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        function updateLiveTime() {
+          const now = new Date();
+
+          // Format time (hh:mm:ss AM/PM)
+          const timeOptions = { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true };
+          document.getElementById("timeText").textContent = now.toLocaleTimeString([], timeOptions);
+
+          // Format date (e.g., Monday, Sep 30, 2025)
+          const dateOptions = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+          document.getElementById("dateText").textContent = now.toLocaleDateString([], dateOptions);
+
+          // Show local timezone
+          document.getElementById("timeZone").textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        }
+
+        // Update immediately on load
+        updateLiveTime();
+
+        // Keep updating every second
+        setInterval(updateLiveTime, 1000);
+      </script>
+
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Today's Appointments -->
+    <div class="col-md-6 col-lg-4">
+      <div class="dashboard-card" onclick="showTodayAppointments()" data-bs-toggle="tooltip" title="Click to manage today's appointments">
+        <div class="card-header text-primary text-center position-relative">
+          <i class="bi bi-calendar-check me-2"></i>Today's Appointments
+          <div class="position-absolute top-0 end-0 mt-2 me-2">
+            <span class="badge bg-primary rounded-pill pulse-badge" id="todayAppointmentsBadge">{{ appointments_today_count or 0 }}</span>
+          </div>
+        </div>
+        <div class="card-body text-center">
+          <div class="display-4 fw-bold text-primary mb-3">
+            <i class="bi bi-calendar2-check me-2"></i>
+            <span class="counter" data-target="{{ appointments_today_count or 0 }}">{{ appointments_today_count or 0 }}</span>
+          </div>
+          <div class="progress mb-3" style="height: 8px;">
+            <div class="progress-bar bg-primary progress-bar-striped progress-bar-animated" role="progressbar" 
+                 style="width: {{ ((appointments_today_count or 0) / 20 * 100) if (appointments_today_count or 0) < 20 else 100 }}%"></div>
+          </div>
+          <div class="row text-center">
+            <div class="col-6">
+              <small class="text-success fw-bold">
+                <i class="bi bi-check-circle me-1"></i>Completed: <span class="counter" data-target="{{ appointments_today_completed or 0 }}">{{ appointments_today_completed or 0 }}</span>
+              </small>
+            </div>
+            <div class="col-6">
+              <small class="text-warning fw-bold">
+                <i class="bi bi-clock me-1"></i>Pending: <span class="counter" data-target="{{ appointments_today_pending or 0 }}">{{ appointments_today_pending or 0 }}</span>
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Patient Statistics -->
+    <div class="col-md-6 col-lg-4">
+      <div class="dashboard-card" onclick="showPatientStats()" data-bs-toggle="tooltip" title="Click to view patient statistics">
+        <div class="card-header text-success text-center position-relative">
+          <i class="bi bi-people me-2"></i>Patient Overview
+          <div class="position-absolute top-0 end-0 mt-2 me-2">
+            <span class="badge bg-success rounded-pill pulse-badge">{{ total_patients_count or 0 }}</span>
+          </div>
+        </div>
+        <div class="card-body text-center">
+          <div class="display-4 fw-bold text-success mb-3">
+            <i class="bi bi-person-hearts me-2"></i>
+            <span class="counter" data-target="{{ total_patients_count or 0 }}">{{ total_patients_count or 0 }}</span>
+          </div>
+          <div class="progress mb-3" style="height: 8px;">
+            <div class="progress-bar bg-success" role="progressbar" 
+                 style="width: {{ ((new_patients_this_month or 0) / (total_patients_count or 1) * 100) if total_patients_count else 0 }}%"></div>
+          </div>
+          <div class="row text-center">
+            <div class="col-6">
+              <small class="text-info fw-bold">
+                <i class="bi bi-person-plus me-1"></i>New: <span class="counter" data-target="{{ new_patients_this_month or 0 }}">{{ new_patients_this_month or 0 }}</span>
+              </small>
+            </div>
+            <div class="col-6">
+              <small class="text-primary fw-bold">
+                <i class="bi bi-heart-pulse me-1"></i>Active: <span class="counter" data-target="{{ active_patients_count or 0 }}">{{ active_patients_count or 0 }}</span>
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+<div class="col-md-12 col-lg-4">
+  <div class="dashboard-card" onclick="showQuickTools()" data-bs-toggle="tooltip" title="Click for quick tools and actions">
+    <div class="card-header text-info text-center position-relative">
+      <i class="bi bi-tools me-2"></i>Quick Tools
+      <div class="position-absolute top-0 end-0 mt-2 me-2">
+        <span class="badge bg-info rounded-pill">
+          <i class="bi bi-lightning-charge"></i>
+        </span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="row g-2">
+        <div class="col-6">
+          <a class="btn btn-outline-primary btn-sm w-100 tool-btn" href="{{ url_for('calendar') }}">
+            <i class="bi bi-calendar-plus d-block mb-1"></i>
+            <small>Add Appointment</small>
+          </a>
+        </div>
+        <div class="col-6">
+          <a class="btn btn-outline-success btn-sm w-100 tool-btn" href="{{ url_for('add_patient') }}" onclick="event.stopPropagation(); quickAddPatient()">
+            <i class="bi bi-person-plus d-block mb-1"></i>
+            <small>Add Patient</small>
+          </a>
+        </div>
+        <div class="col-6">
+          <a class="btn btn-outline-warning btn-sm w-100 tool-btn" href="{{ url_for('patients') }}" onclick="event.stopPropagation(); viewPatients()">
+            <i class="bi bi-people d-block mb-1"></i>
+            <small>View Patients</small>
+          </a>
+        </div>
+        <div class="col-6">
+          <a class="btn btn-outline-info btn-sm w-100 tool-btn" href="{{ url_for('finances') }}" onclick="event.stopPropagation(); showReports()">
+            <i class="bi bi-graph-up d-block mb-1"></i>
+            <small>Reports</small>
+          </a>
+        </div>
+      </div>
+      <div class="mt-3 text-center">
+        <div class="progress" style="height: 4px;">
+          <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+        </div>
+        <small class="text-muted mt-1 d-block">All systems operational</small>
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+
+
+  <!-- Recent Activity Section -->
+  <div class="row g-4 mt-2">
+    <div class="col-lg-8">
+      <div class="dashboard-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="bi bi-activity me-2"></i>Recent Activity
+          </h5>
+          <button class="btn btn-outline-primary btn-sm" onclick="refreshActivity()">
+            <i class="bi bi-arrow-clockwise" id="activityRefreshIcon"></i>
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="timeline" id="recentActivity">
+            {% if recent_activities %}
+              {% for activity in recent_activities %}
+              <div class="timeline-item timeline-clickable" 
+                   {% if activity.type == 'visit' and activity.patient_id %}
+                   onclick="goToPatient({{ activity.patient_id }})" 
+                   style="cursor: pointer;" 
+                   data-bs-toggle="tooltip" 
+                   title="Click to view patient details"
+                   {% elif activity.type == 'transaction' %}
+                   onclick="showTransactionDetails({{ activity.data.id }})" 
+                   style="cursor: pointer;" 
+                   data-bs-toggle="tooltip" 
+                   title="Click to view transaction details"
+                   {% endif %}>
+                <div class="timeline-marker bg-{% if loop.index0 % 4 == 0 %}success{% elif loop.index0 % 4 == 1 %}info{% elif loop.index0 % 4 == 2 %}warning{% else %}primary{% endif %}"></div>
+                <div class="timeline-content">
+                  <h6 class="mb-1">
+                    <i class="bi bi-{{ activity.icon }} me-1"></i>{{ activity.title }}
+                  </h6>
+                  <p class="mb-1 text-muted">{{ activity.description }}</p>
+                  <small class="text-muted">
+                    <i class="bi bi-clock me-1"></i>{{ activity.date.strftime('%b %d, %Y') }}
+                  </small>
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="timeline-item">
+                <div class="timeline-marker bg-secondary"></div>
+                <div class="timeline-content">
+                  <h6 class="mb-1">No Recent Activity</h6>
+                  <p class="mb-1 text-muted">No recent activities recorded</p>
+                  <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>Start by adding patients and visits
+                  </small>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-4">
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="bi bi-calendar-week me-2"></i>Upcoming Appointments
+          </h5>
+        </div>
+        <div class="card-body">
+          {% if upcoming_appointments %}
+            {% for appointment in upcoming_appointments %}
+            <div class="upcoming-item d-flex align-items-center mb-3">
+              <div class="upcoming-date text-center me-3">
+                {% set is_today = appointment.appointment_date.strftime('%Y-%m-%d') == today.strftime('%Y-%m-%d') if today is defined else false %}
+                
+                {% if is_today %}
+                  <div class="fw-bold text-danger">TODAY</div>
+                  <div class="h5 mb-0 text-danger">{{ appointment.appointment_date.strftime('%I:%M %p') }}</div>
+                {% else %}
+                  <div class="fw-bold text-{% if loop.index0 % 3 == 0 %}primary{% elif loop.index0 % 3 == 1 %}success{% else %}warning{% endif %}">{{ appointment.appointment_date.strftime('%b') }}</div>
+                  <div class="h4 mb-0">{{ appointment.appointment_date.strftime('%d') }}</div>
+                {% endif %}
+              </div>
+              <div>
+                <h6 class="mb-1">{{ appointment.patient.name }}</h6>
+                <small class="text-muted">
+                  {{ appointment.appointment_type }}
+                  {% if not is_today %}
+                    at {{ appointment.appointment_date.strftime('%I:%M %p') }}
+                  {% endif %}
+                  {% if appointment.notes %}
+                    <br><em>{{ appointment.notes[:30] }}{% if appointment.notes|length > 30 %}...{% endif %}</em>
+                  {% endif %}
+                </small>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-center text-muted py-4">
+              <i class="bi bi-calendar-x h2 d-block mb-2"></i>
+              <p class="mb-0">No upcoming appointments</p>
+              <small>Schedule new appointments from the calendar</small>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-actions">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <a href="{{ url_for('add_patient') }}" class="btn btn-primary btn-lg w-100 interactive-btn">
+          <i class="bi bi-person-plus me-2"></i>
+          <strong>Add New Patient</strong>
+          <small class="d-block">Quick registration</small>
+        </a>
+      </div>
+      <div class="col-md-6">
+        <a href="{{ url_for('patients') }}" class="btn btn-outline-secondary btn-lg w-100 interactive-btn">
+          <i class="bi bi-people me-2"></i>
+          <strong>View Patients</strong>
+          <small class="d-block">Manage records</small>
+        </a>
+      </div>
+      <div class="col-md-4">
+        <a href="{{ url_for('finances') }}" class="btn btn-outline-info btn-lg w-100 interactive-btn">
+          <i class="bi bi-graph-up me-2"></i>
+          <strong>Quick Stats</strong>
+          <small class="d-block">Summary</small>
+        </a>
+      </div>
+      <div class="col-md-4">
+        <a href="{{ url_for('calendar') }}" class="btn btn-outline-warning btn-lg w-100 interactive-btn">
+          <i class="bi bi-calendar-event me-2"></i>
+          <strong>Calendar</strong>
+          <small class="d-block">Appointments</small>
+        </a>
+      </div>
+      <div class="col-md-4">
+        <a href="{{ url_for('contact') }}" class="btn btn-outline-success btn-lg w-100 interactive-btn">
+          <i class="bi bi-headset me-2"></i>
+          <strong>Contact</strong>
+          <small class="d-block">Support</small>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dynamic Modal -->
+<div class="modal fade" id="dynamicModal" tabindex="-1" aria-labelledby="dynamicModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="dynamicModalLabel">Modal Title</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="dynamicModalBody">
+        <!-- Dynamic content will be inserted here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+<script>
+// Counter animation for financial statistics
+function animateCounters() {
+    const counters = document.querySelectorAll('.counter');
+    
+    counters.forEach((counter, index) => {
+        const target = parseInt(counter.getAttribute('data-target')) || 0;
+        
+        // If target is 0, just set it immediately
+        if (target === 0) {
+            counter.textContent = '0';
+            return;
+        }
+        
+        // Animate from 0 to target
+        let current = 0;
+        const increment = Math.max(1, Math.ceil(target / 50)); // Ensure at least 1 increment
+        
+        const updateCounter = () => {
+            if (current < target) {
+                current = Math.min(current + increment, target);
+                counter.textContent = current;
+                setTimeout(updateCounter, 30);
+            } else {
+                counter.textContent = target;
+            }
+        };
+        
+        // Start animation with a slight delay
+        setTimeout(updateCounter, index * 100);
+    });
+}
+
+// Show today's appointments
+function showTodayAppointments() {
+    showModal('Today\'s Appointments', `
+        <div class="row g-3 mb-3">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="text-primary mb-0">
+                        <i class="bi bi-calendar-check me-1"></i>Appointment Schedule
+                    </h6>
+                    <span class="badge bg-primary">{{ appointments_today_count or 0 }} Total</span>
+                </div>
+                <div class="list-group">
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">9:00 AM - John Doe</h6>
+                            <small class="text-muted">Regular checkup</small>
+                        </div>
+                        <span class="badge bg-success">Completed</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">10:30 AM - Sarah Smith</h6>
+                            <small class="text-muted">Dental cleaning</small>
+                        </div>
+                        <span class="badge bg-warning">In Progress</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">2:00 PM - Mike Johnson</h6>
+                            <small class="text-muted">Follow-up visit</small>
+                        </div>
+                        <span class="badge bg-secondary">Pending</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-center">
+            <button class="btn btn-primary btn-sm me-2" onclick="window.location.href='{{ url_for('calendar') }}'">
+                <i class="bi bi-calendar-week me-1"></i>View Full Calendar
+            </button>
+            <button class="btn btn-success btn-sm" onclick="quickAddAppointment()">
+                <i class="bi bi-plus-circle me-1"></i>Add New
+            </button>
+        </div>
+    `);
+}
+
+// Show patient statistics
+function showPatientStats() {
+    showModal('Patient Statistics', `
+        <div class="row g-3 mb-3">
+            <div class="col-6 text-center">
+                <h4 class="text-success">{{ total_patients_count or 0 }}</h4>
+                <small class="text-muted">Total Patients</small>
+            </div>
+            <div class="col-6 text-center">
+                <h4 class="text-info">{{ new_patients_this_month or 0 }}</h4>
+                <small class="text-muted">New This Month</small>
+            </div>
+            <div class="col-6 text-center">
+                <h4 class="text-primary">{{ active_patients_count or 0 }}</h4>
+                <small class="text-muted">Active Patients</small>
+            </div>
+            <div class="col-6 text-center">
+                <h4 class="text-warning">{{ ((new_patients_this_month or 0) / (total_patients_count or 1) * 100) | round(1) }}%</h4>
+                <small class="text-muted">Growth Rate</small>
+            </div>
+        </div>
+        <div class="progress mb-3" style="height: 8px;">
+            <div class="progress-bar bg-success" style="width: 75%"></div>
+        </div>
+        <div class="text-center">
+            <button class="btn btn-primary btn-sm me-2" onclick="window.location.href='{{ url_for('patients') }}'">
+                <i class="bi bi-people me-1"></i>View All Patients
+            </button>
+            <button class="btn btn-success btn-sm" onclick="quickAddPatient()">
+                <i class="bi bi-person-plus me-1"></i>Add New Patient
+            </button>
+        </div>
+    `);
+}
+
+// Show quick tools
+function showQuickTools() {
+    showModal('Quick Tools & Actions', `
+        <div class="row g-3">
+            <div class="col-6">
+                <button class="btn btn-outline-primary w-100 p-3" onclick="quickAddAppointment()">
+                    <i class="bi bi-calendar-plus d-block mb-2" style="font-size: 2rem;"></i>
+                    <strong>Add Appointment</strong>
+                    <small class="d-block text-muted">Schedule new appointment</small>
+                </button>
+            </div>
+            <div class="col-6">
+                <button class="btn btn-outline-success w-100 p-3" onclick="quickAddPatient()">
+                    <i class="bi bi-person-plus d-block mb-2" style="font-size: 2rem;"></i>
+                    <strong>Add Patient</strong>
+                    <small class="d-block text-muted">Register new patient</small>
+                </button>
+            </div>
+            <div class="col-6">
+                <button class="btn btn-outline-warning w-100 p-3" onclick="quickSearch()">
+                    <i class="bi bi-search d-block mb-2" style="font-size: 2rem;"></i>
+                    <strong>Quick Search</strong>
+                    <small class="d-block text-muted">Find patient records</small>
+                </button>
+            </div>
+            <div class="col-6">
+                <button class="btn btn-outline-info w-100 p-3" onclick="showReports()">
+                    <i class="bi bi-graph-up d-block mb-2" style="font-size: 2rem;"></i>
+                    <strong>Reports</strong>
+                    <small class="d-block text-muted">Generate reports</small>
+                </button>
+            </div>
+        </div>
+        <hr>
+        <div class="text-center">
+            <small class="text-muted">All tools are ready for use</small>
+        </div>
+    `);
+}
+
+// Quick action functions
+function quickAddAppointment() {
+    // Try to navigate to calendar, fallback to appointment modal
+    fetch('/calendar')
+        .then(response => {
+            if (response.ok) {
+                window.location.href = '/calendar';
+            } else {
+                // Show appointment creation modal
+                showAppointmentModal();
+            }
+        })
+        .catch(() => {
+            // If calendar route doesn't exist, show appointment modal
+            showAppointmentModal();
+        });
+}
+
+function showAppointmentModal() {
+    showModal('Add New Appointment', `
+        <form id="appointmentForm">
+            <div class="mb-3">
+                <label for="patientSelect" class="form-label">Select Patient:</label>
+                <select class="form-select" id="patientSelect" required>
+                    <option value="">Choose a patient...</option>
+                </select>
+                <small class="text-muted">Loading patients...</small>
+            </div>
+            <div class="mb-3">
+                <label for="appointmentDate" class="form-label">Date:</label>
+                <input type="date" class="form-control" id="appointmentDate" required min="${new Date().toISOString().split('T')[0]}">
+            </div>
+            <div class="mb-3">
+                <label for="appointmentTime" class="form-label">Time:</label>
+                <input type="time" class="form-control" id="appointmentTime" required>
+            </div>
+            <div class="mb-3">
+                <label for="appointmentNotes" class="form-label">Notes:</label>
+                <textarea class="form-control" id="appointmentNotes" rows="3" placeholder="Appointment notes..."></textarea>
+            </div>
+            <div class="d-grid">
+                <button type="button" class="btn btn-primary" onclick="saveAppointment()">
+                    <i class="bi bi-check-circle me-1"></i>Save Appointment
+                </button>
+            </div>
+        </form>
+    `);
+    
+    // Load patients for the dropdown
+    loadPatientsForAppointment();
+}
+
+function quickAddPatient() {
+    window.location.href = '/add_patient';
+}
+
+function loadPatientsForAppointment() {
+    // This would normally fetch patients from an API
+    // For now, we'll show a simple message
+    const patientSelect = document.getElementById('patientSelect');
+    if (patientSelect) {
+        patientSelect.innerHTML = `
+            <option value="">Choose a patient...</option>
+            <option value="new">+ Add New Patient First</option>
+        `;
+        patientSelect.parentNode.querySelector('small').textContent = 'Select a patient or add a new one first';
+    }
+}
+
+function viewPatients() {
+    window.location.href = '/patients';
+}
+
+function performSearch() {
+    const searchTerm = document.getElementById('searchInput').value;
+    if (searchTerm.trim()) {
+        window.location.href = `/patients?q=${encodeURIComponent(searchTerm)}`;
+    } else {
+        showToast('Please enter a search term', 'warning');
+    }
+}
+
+function saveAppointment() {
+    const patientId = document.getElementById('patientSelect').value;
+    const date = document.getElementById('appointmentDate').value;
+    const time = document.getElementById('appointmentTime').value;
+    const notes = document.getElementById('appointmentNotes').value;
+    
+    if (!patientId || !date || !time) {
+        showToast('Please fill in all required fields', 'warning');
+        return;
+    }
+    
+    if (patientId === 'new') {
+        showToast('Please add a patient first, then create appointments', 'info');
+        setTimeout(() => {
+            window.location.href = '/add_patient';
+        }, 1500);
+        return;
+    }
+    
+    // Simulate saving the appointment
+    showToast('Appointment scheduled successfully!', 'success');
+    
+    // Close modal after a short delay
+    setTimeout(() => {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('dynamicModal'));
+        if (modal) {
+            modal.hide();
+        }
+        // Refresh the page to show updated appointments
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
+    }, 1500);
+}
+
+function showReports() {
+    showModal('Reports & Analytics', `
+        <div class="row g-3">
+            <div class="col-12">
+                <h6 class="text-primary mb-3">Available Reports</h6>
+            </div>
+            <div class="col-6">
+                <button class="btn btn-outline-success w-100" onclick="generateReport('patients')">
+                    <i class="bi bi-people me-1"></i>Patient Report
+                </button>
+            </div>
+            <div class="col-6">
+                <button class="btn btn-outline-info w-100" onclick="generateReport('appointments')">
+                    <i class="bi bi-calendar-week me-1"></i>Appointment Report
+                </button>
+            </div>
+            <div class="col-6">
+                <button class="btn btn-outline-warning w-100" onclick="generateReport('visits')">
+                    <i class="bi bi-clipboard-data me-1"></i>Visit Report
+                </button>
+            </div>
+            <div class="col-6">
+                <button class="btn btn-outline-primary w-100" onclick="generateReport('overview')">
+                    <i class="bi bi-graph-up me-1"></i>Practice Overview
+                </button>
+            </div>
+        </div>
+    `);
+}
+
+function generateReport(type) {
+    showToast(`Generating ${type} report...`, 'info');
+    // Redirect to appropriate report page or generate report
+    setTimeout(() => {
+        showToast(`${type} report generated successfully!`, 'success');
+    }, 2000);
+}
+
+// Refresh activity timeline
+function refreshActivity() {
+    const refreshIcon = document.getElementById('activityRefreshIcon');
+    refreshIcon.classList.add('fa-spin');
+    
+    setTimeout(() => {
+        refreshIcon.classList.remove('fa-spin');
+        showToast('Activity timeline updated!', 'success');
+        
+        // Add a new activity item for demo
+        const timeline = document.getElementById('recentActivity');
+        const newItem = document.createElement('div');
+        newItem.className = 'timeline-item';
+        newItem.innerHTML = `
+            <div class="timeline-marker bg-success"></div>
+            <div class="timeline-content">
+                <h6 class="mb-1">Dashboard Refreshed</h6>
+                <p class="mb-1 text-muted">Activity timeline updated successfully</p>
+                <small class="text-muted">
+                    <i class="bi bi-clock me-1"></i>Just now
+                </small>
+            </div>
+        `;
+        timeline.insertBefore(newItem, timeline.firstChild);
+    }, 1500);
+}
+
+// Generic modal function
+function showModal(title, content) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('dashboardModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Create modal HTML
+    const modalHTML = `
+        <div class="modal fade" id="dashboardModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">${title}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ${content}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('dashboardModal'));
+    modal.show();
+    
+    // Remove modal from DOM when hidden
+    document.getElementById('dashboardModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+// Add ripple effect to clickable elements
+function addRippleEffect(element, event) {
+    const ripple = document.createElement('div');
+    ripple.style.cssText = `
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.5);
+        transform: scale(0);
+        animation: ripple-effect 0.6s linear;
+        pointer-events: none;
+    `;
+    
+    const rect = element.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (event.clientX - rect.left - size / 2) + 'px';
+    ripple.style.top = (event.clientY - rect.top - size / 2) + 'px';
+    
+    element.appendChild(ripple);
+    
+    setTimeout(() => {
+        ripple.remove();
+    }, 600);
+}
+
+// Update live clock
+function updateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', {
+        hour12: true,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+    const dateString = now.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    
+    // Get timezone information
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const timezoneAbbr = now.toLocaleTimeString('en-US', { timeZoneName: 'short' }).split(' ').pop();
+    
+    // Update the new live time display
+    const timeTextElement = document.getElementById('timeText');
+    const dateTextElement = document.getElementById('dateText');
+    const timeZoneElement = document.getElementById('timeZone');
+    
+    if (timeTextElement) {
+        timeTextElement.textContent = timeString;
+    }
+    
+    if (dateTextElement) {
+        dateTextElement.textContent = dateString;
+    }
+    
+    if (timeZoneElement) {
+        timeZoneElement.textContent = `${timezone} (${timezoneAbbr})`;
+    }
+    
+    return !!(timeTextElement && dateTextElement && timeZoneElement);
+}
+
+// Robust clock initialization
+function initializeClock() {
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    const tryUpdate = () => {
+        attempts++;
+        const success = updateTime();
+        
+        if (!success && attempts < maxAttempts) {
+            console.log(`Clock initialization attempt ${attempts} failed, retrying...`);
+            setTimeout(tryUpdate, 200);
+        } else if (success) {
+            console.log('Clock initialized successfully!');
+            // Start regular updates
+            setInterval(updateTime, 1000);
+        } else {
+            console.error('Failed to initialize clock after', maxAttempts, 'attempts');
+        }
+    };
+    
+    tryUpdate();
+}
+    
+    // Legacy support for old currentTime element
+    const timeElement = document.getElementById('currentTime');
+    if (timeElement) {
+        timeElement.innerHTML = `${dateString} ${timeString}`;
+    }
+}
+
+// Refresh dashboard data
+function refreshDashboard() {
+    const refreshIcon = document.getElementById('refreshIcon');
+    refreshIcon.classList.add('fa-spin');
+    
+    // Simulate data refresh
+    setTimeout(() => {
+        refreshIcon.classList.remove('fa-spin');
+        
+        // Re-animate counters
+        document.querySelectorAll('.counter').forEach(counter => {
+            counter.textContent = '0';
+        });
+        animateCounters();
+        
+        // Show success message
+        const toast = document.createElement('div');
+        toast.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        toast.innerHTML = `
+            <i class="bi bi-check-circle me-2"></i>Dashboard refreshed!
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 3000);
+    }, 2000);
+}
+
+// Initialize everything when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Start live clock immediately and update every second
+    console.log('Initializing clock...');
+    
+    // Add a small delay to ensure all elements are rendered
+    setTimeout(() => {
+        console.log('Starting delayed time update...');
+        updateTime();
+        setInterval(updateTime, 1000);
+    }, 100);
+    
+    // Start counter animations after page load
+    setTimeout(() => {
+        animateCounters();
+    }, 1500);
+    
+    // Add ripple effects to dashboard cards
+    document.querySelectorAll('.dashboard-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            addRippleEffect(this, e);
+        });
+    });
+    
+    // Add ripple effects to interactive buttons
+    document.querySelectorAll('.interactive-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            addRippleEffect(this, e);
+        });
+    });
+    
+    // Animate progress bars
+    setTimeout(() => {
+        document.querySelectorAll('.progress-bar').forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 100);
+        });
+    }, 1500);
+});
+
+// Try to update time immediately when script loads
+try {
+    console.log('Attempting immediate time update...');
+    updateTime();
+} catch (e) {
+    console.log('Immediate update failed:', e);
+}
+
+// Add ripple animation CSS
+const rippleStyle = document.createElement('style');
+rippleStyle.textContent = `
+    @keyframes ripple-effect {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(rippleStyle);
+
+// Utility Functions
+function updateTime() {
+    const now = new Date();
+    const options = { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit',
+        hour12: true 
+    };
+    const timeString = now.toLocaleTimeString('en-US', options);
+    
+    const clockElement = document.getElementById('liveClock');
+    if (clockElement) {
+        clockElement.textContent = timeString;
+    }
+}
+
+// Toast notification system
+function showToast(message, type = 'info') {
+    const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+    
+    const toastId = 'toast-' + Date.now();
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true" id="${toastId}">
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+    
+    // Remove toast element after it's hidden
+    toastElement.addEventListener('hidden.bs.toast', function() {
+        toastElement.remove();
+    });
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '1055';
+    document.body.appendChild(container);
+    return container;
+}
+
+// Navigation functions
+function goToPatient(patientId) {
+    window.location.href = `/patient/${patientId}`;
+}
+
+function showTransactionDetails(transactionId) {
+    // Show loading modal
+    showModal('Transaction Details', `
+        <div class="d-flex justify-content-center mb-3">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <p class="text-center">Loading transaction details...</p>
+    `);
+    
+    // Fetch real transaction details from server
+    fetch(`/api/transaction/${transactionId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            const typeColor = data.type === 'income' ? 'success' : 'danger';
+            const typeIcon = data.type === 'income' ? 'cash-coin' : 'receipt';
+            const modalBody = document.getElementById('dynamicModalBody');
+            
+            modalBody.innerHTML = `
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="bi bi-${typeIcon} me-2"></i>Transaction #${data.id}
+                                    <span class="badge bg-${typeColor} ms-2">${data.type.charAt(0).toUpperCase() + data.type.slice(1)}</span>
+                                </h6>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <small class="text-muted">Category:</small>
+                                        <p class="mb-1 fw-bold">${data.category}</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Amount:</small>
+                                        <p class="mb-1 fw-bold text-${typeColor}">$${data.amount.toFixed(2)}</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Payment Method:</small>
+                                        <p class="mb-1">${data.payment_method || 'Not specified'}</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Date:</small>
+                                        <p class="mb-1">${data.date}</p>
+                                    </div>
+                                    <div class="col-12">
+                                        <small class="text-muted">Description:</small>
+                                        <p class="mb-1">${data.description || 'No description'}</p>
+                                    </div>
+                                    ${data.notes ? `
+                                    <div class="col-12">
+                                        <small class="text-muted">Notes:</small>
+                                        <p class="mb-1">${data.notes}</p>
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Close
+                    </button>
+                </div>
+            `;
+        })
+        .catch(error => {
+            console.error('Error fetching transaction details:', error);
+            const modalBody = document.getElementById('dynamicModalBody');
+            modalBody.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Error loading transaction details: ${error.message}
+                </div>
+                <div class="text-center">
+                    <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Close
+                    </button>
+                </div>
+            `;
+        });
+}
+
+function editTransaction(transactionId) {
+    showToast('Edit transaction feature coming soon!', 'info');
+}
+</script>

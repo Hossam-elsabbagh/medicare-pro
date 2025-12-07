@@ -1,0 +1,448 @@
+{% extends "base.html" %}
+{% block title %}Doctor Profile - MediCare Pro{% endblock %}
+
+{% block content %}
+<style>
+  .profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .profile-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .profile-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+  }
+  
+  .profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b6b, #feca57);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: bold;
+    color: white;
+    margin: 0 auto 1rem;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    border: 4px solid rgba(255,255,255,0.3);
+    position: relative;
+    z-index: 1;
+  }
+  
+  .profile-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .profile-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  }
+  
+  .card-header-custom {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    padding: 1.25rem 1.5rem;
+  }
+  
+  .info-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f8f9fa;
+    display: flex;
+    align-items: center;
+  }
+  
+  .info-item:last-child {
+    border-bottom: none;
+  }
+  
+  .info-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    flex-shrink: 0;
+  }
+  
+  .stat-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    border: 1px solid #f0f0f0;
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+  }
+  
+  .stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .stat-label {
+    color: #6c757d;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+  }
+  
+  .btn-profile {
+    border-radius: 10px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    border: none;
+  }
+  
+  .btn-profile-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102,126,234,0.3);
+  }
+  
+  .btn-profile-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+    color: white;
+  }
+  
+  .btn-profile-secondary {
+    background: linear-gradient(135deg, #ff6b6b, #feca57);
+    color: white;
+    box-shadow: 0 4px 15px rgba(255,107,107,0.3);
+  }
+  
+  .btn-profile-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255,107,107,0.4);
+    color: white;
+  }
+  
+  .activity-item {
+    padding: 1rem;
+    border-left: 4px solid #667eea;
+    background: #f8f9fa;
+    border-radius: 0 10px 10px 0;
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+  }
+  
+  .activity-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+  }
+  
+  .activity-date {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+  }
+  
+  @media (max-width: 768px) {
+    .profile-header {
+      text-align: center;
+      padding: 1.5rem;
+    }
+    
+    .profile-avatar {
+      width: 100px;
+      height: 100px;
+      font-size: 2.5rem;
+    }
+    
+    .stat-number {
+      font-size: 2rem;
+    }
+  }
+</style>
+
+<div class="profile-container">
+  <!-- Profile Header -->
+  <div class="profile-header text-center">
+    <div class="profile-avatar">
+      {{ doctor.first_name[0] }}{{ doctor.last_name[0] }}
+    </div>
+    <h1 class="mb-2">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</h1>
+    <p class="mb-3 opacity-75">
+      {% if doctor.clinic %}
+        <i class="bi bi-hospital me-2"></i>{{ doctor.clinic.name }}
+      {% else %}
+        <i class="bi bi-person-badge me-2"></i>Healthcare Professional
+      {% endif %}
+    </p>
+    <div class="d-flex justify-content-center gap-3 flex-wrap" style="position: relative; z-index: 2;">
+      <a href="{{ url_for('edit_profile') }}" class="btn btn-profile btn-profile-primary">
+        <i class="bi bi-pencil-square me-2"></i>Edit Profile
+      </a>
+      <a href="{{ url_for('change_password') }}" class="btn btn-profile btn-profile-secondary">
+        <i class="bi bi-key me-2"></i>Change Password
+      </a>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card">
+        <div class="stat-number">{{ total_patients or 0 }}</div>
+        <div class="stat-label">Total Patients</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card">
+        <div class="stat-number">{{ active_patients or 0 }}</div>
+        <div class="stat-label">Active Patients</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card">
+        <div class="stat-number">{{ upcoming_appointments|length or 0 }}</div>
+        <div class="stat-label">Upcoming Appointments</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card">
+        <div class="stat-number">{{ recent_visits|length or 0 }}</div>
+        <div class="stat-label">Recent Visits</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Personal Information -->
+    <div class="col-lg-6">
+      <div class="profile-card">
+        <div class="card-header-custom">
+          <h5 class="mb-0 d-flex align-items-center">
+            <i class="bi bi-person-lines-fill me-2 text-primary"></i>
+            Personal Information
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="info-item">
+            <div class="info-icon">
+              <i class="bi bi-person-fill"></i>
+            </div>
+            <div>
+              <strong>Full Name</strong><br>
+              <span class="text-muted">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</span>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-icon">
+              <i class="bi bi-envelope-fill"></i>
+            </div>
+            <div>
+              <strong>Email Address</strong><br>
+              <span class="text-muted">{{ doctor.email }}</span>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-icon">
+              <i class="bi bi-telephone-fill"></i>
+            </div>
+            <div>
+              <strong>Phone Number</strong><br>
+              <span class="text-muted">{{ doctor.phone }}</span>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-icon">
+              <i class="bi bi-calendar-fill"></i>
+            </div>
+            <div>
+              <strong>Joined Date</strong><br>
+              <span class="text-muted">{{ doctor.created_at.strftime('%B %d, %Y') if doctor.created_at else 'N/A' }}</span>
+            </div>
+          </div>
+          {% if doctor.last_login %}
+          <div class="info-item">
+            <div class="info-icon">
+              <i class="bi bi-clock-fill"></i>
+            </div>
+            <div>
+              <strong>Last Login</strong><br>
+              <span class="text-muted">{{ doctor.last_login.strftime('%B %d, %Y at %I:%M %p') }}</span>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="col-lg-6">
+      <div class="profile-card">
+        <div class="card-header-custom">
+          <h5 class="mb-0 d-flex align-items-center">
+            <i class="bi bi-activity me-2 text-success"></i>
+            Recent Activity
+          </h5>
+        </div>
+        <div class="card-body">
+          {% if recent_visits %}
+            {% for visit in recent_visits %}
+              <div class="activity-item">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <strong>{{ visit.patient.name }}</strong><br>
+                    <small class="text-muted">
+                      {% if visit.diagnosis %}
+                        Diagnosis: {{ visit.diagnosis }}
+                      {% else %}
+                        Regular visit
+                      {% endif %}
+                    </small>
+                  </div>
+                  <div class="activity-date">
+                    {{ visit.visit_date.strftime('%b %d') }}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+            <div class="text-center mt-3">
+              <a href="{{ url_for('patients') }}" class="btn btn-sm btn-outline-primary">
+                View All Patients
+              </a>
+            </div>
+          {% else %}
+            <div class="text-center text-muted py-4">
+              <i class="bi bi-calendar-x h2 d-block mb-2"></i>
+              <p class="mb-0">No recent visits</p>
+              <small>Patient visits will appear here</small>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upcoming Appointments -->
+  {% if upcoming_appointments %}
+  <div class="row g-4 mt-2">
+    <div class="col-12">
+      <div class="profile-card">
+        <div class="card-header-custom">
+          <h5 class="mb-0 d-flex align-items-center">
+            <i class="bi bi-calendar-event me-2 text-warning"></i>
+            Upcoming Appointments
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            {% for appointment in upcoming_appointments %}
+              <div class="col-md-6">
+                <div class="activity-item">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <strong>{{ appointment.patient.name }}</strong><br>
+                      <small class="text-muted">
+                        {{ appointment.appointment_type if appointment.appointment_type else 'Consultation' }}
+                      </small><br>
+                      <small class="text-info">
+                        <i class="bi bi-clock me-1"></i>
+                        {{ appointment.appointment_date.strftime('%I:%M %p') }}
+                      </small>
+                    </div>
+                    <div class="activity-date">
+                      {{ appointment.appointment_date.strftime('%b %d') }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          <div class="text-center mt-3">
+            <a href="{{ url_for('calendar') }}" class="btn btn-sm btn-outline-warning">
+              View Full Calendar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Quick Actions -->
+  <div class="row g-4 mt-2">
+    <div class="col-12">
+      <div class="profile-card">
+        <div class="card-header-custom">
+          <h5 class="mb-0 d-flex align-items-center">
+            <i class="bi bi-lightning-charge-fill me-2 text-info"></i>
+            Quick Actions
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-3 col-sm-6">
+              <a href="{{ url_for('add_patient') }}" class="btn btn-outline-primary w-100 py-3">
+                <i class="bi bi-person-plus d-block mb-2 fs-4"></i>
+                Add Patient
+              </a>
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <a href="{{ url_for('patients') }}" class="btn btn-outline-success w-100 py-3">
+                <i class="bi bi-people d-block mb-2 fs-4"></i>
+                View Patients
+              </a>
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <a href="{{ url_for('calendar') }}" class="btn btn-outline-warning w-100 py-3">
+                <i class="bi bi-calendar-event d-block mb-2 fs-4"></i>
+                Appointments
+              </a>
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <a href="{{ url_for('dashboard') }}" class="btn btn-outline-info w-100 py-3">
+                <i class="bi bi-speedometer2 d-block mb-2 fs-4"></i>
+                Dashboard
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

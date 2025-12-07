@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  body {
+    background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+    min-height: 100vh;
+  }
+  .login-card {
+    max-width: 400px;
+    margin: 60px auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(44, 62, 80, 0.10);
+    padding: 2.5rem 2rem 2rem 2rem;
+    position: relative;
+    border: 1px solid #e3e6f0;
+    /* Animation */
+    opacity: 0;
+    transform: translateY(40px) scale(0.98);
+    animation: loginFadeIn 0.8s cubic-bezier(.4,1.4,.7,1) forwards;
+  }
+  @keyframes loginFadeIn {
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  .login-title {
+    font-weight: 700;
+    color: #2563eb;
+    margin-bottom: 1.5rem;
+    letter-spacing: 1px;
+    text-align: center;
+    font-size: 2rem;
+    /* Animation */
+    opacity: 0;
+    animation: titleFadeIn 0.7s 0.3s cubic-bezier(.4,1.4,.7,1) forwards;
+  }
+  @keyframes titleFadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+  .form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.3rem;
+  }
+  .form-control {
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #f1f5f9;
+    font-size: 1rem;
+  }
+  .form-control:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px #dbeafe;
+    background: #fff;
+  }
+  .btn-primary {
+    background: linear-gradient(90deg, #2563eb 60%, #1d4ed8 100%);
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 0.6rem 0;
+    transition: background 0.2s, transform 0.15s;
+    width: 100%;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+    /* Animation */
+    opacity: 0;
+    animation: btnFadeIn 0.7s 0.7s cubic-bezier(.4,1.4,.7,1) forwards;
+  }
+  .btn-primary:hover {
+    background: linear-gradient(90deg, #1d4ed8 60%, #2563eb 100%);
+    transform: translateY(-2px) scale(1.03);
+  }
+  @keyframes btnFadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+  .signup-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #64748b;
+    font-size: 0.97rem;
+    /* Animation */
+    opacity: 0;
+    animation: linkFadeIn 0.7s 1s cubic-bezier(.4,1.4,.7,1) forwards;
+  }
+  @keyframes linkFadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+  .signup-link a {
+    color: #2563eb;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .signup-link a:hover {
+    color: #1e40af;
+    text-decoration: underline;
+  }
+</style>
+
+<div class="login-card">
+  <h2 class="login-title">Doctor Login</h2>
+  <form method="POST" autocomplete="off">
+    {{ form.hidden_tag() }}
+    <div class="form-group mb-3">
+      {{ form.email.label(class="form-label") }}
+      {{ form.email(class="form-control", placeholder="Enter your email") }}
+    </div>
+    <div class="form-group mb-4">
+      {{ form.password.label(class="form-label") }}
+      {{ form.password(class="form-control", placeholder="Enter your password") }}
+    </div>
+    <div class="form-group">
+      {{ form.submit(class="btn btn-primary") }}
+    </div>
+  </form>
+  
+  <div class="signup-link">
+    <small class="text-muted">Contact your administrator to create an account</small>
+  </div>
+  
+  <div class="text-center mt-3">
+    <hr class="my-3">
+    <small class="text-muted">
+      <a href="{{ url_for('superadmin_login') }}" class="text-decoration-none">
+        <i class="fas fa-crown me-1"></i>Super Admin Login
+      </a>
+    </small>
+  </div>
+</div>
+{% endblock %}
