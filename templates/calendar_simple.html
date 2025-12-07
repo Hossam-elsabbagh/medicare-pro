@@ -1,0 +1,1000 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .calendar-container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    padding: 0;
+    overflow: hidden;
+  }
+  
+  .calendar-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .calendar-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .calendar-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  
+  .calendar-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+  }
+  
+  .calendar-btn:hover {
+    background: rgba(255,255,255,0.25);
+    color: white;
+    transform: translateY(-1px);
+  }
+  
+  .view-selector {
+    display: flex;
+    gap: 4px;
+    background: rgba(255,255,255,0.1);
+    padding: 4px;
+    border-radius: 8px;
+  }
+  
+  .view-btn {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+  
+  .view-btn.active {
+    background: rgba(255,255,255,0.3);
+    transform: none;
+  }
+  
+  .simple-calendar {
+    padding: 30px;
+  }
+  
+  .calendar-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 10px;
+  }
+  
+  .nav-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+  
+  .nav-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+  
+  .month-year {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+  
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .calendar-day-header {
+    background: #f8f9fa;
+    padding: 15px 5px;
+    text-align: center;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+  }
+  
+  .calendar-day {
+    background: white;
+    min-height: 120px;
+    padding: 8px;
+    position: relative;
+    border: 1px solid #e9ecef;
+    transition: background-color 0.2s ease;
+  }
+  
+  .calendar-day:hover {
+    background: #f8f9fa;
+  }
+  
+  .calendar-day.today {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+  }
+  
+  .calendar-day.other-month {
+    background: #f8f9fa;
+    color: #adb5bd;
+  }
+  
+  .day-number {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #495057;
+  }
+  
+  .today .day-number {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+  }
+  
+  .appointment {
+    background: linear-gradient(135deg, #4fc3f7 0%, #29b6f6 100%);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    margin-bottom: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: block;
+    text-decoration: none;
+  }
+  
+  .appointment:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    color: white;
+    text-decoration: none;
+  }
+  
+  .appointment.next-visit {
+    background: linear-gradient(135deg, #ffb74d 0%, #ffa726 100%);
+    color: #2c3e50;
+  }
+  
+  .appointment.past-visit {
+    background: linear-gradient(135deg, #a5d6a7 0%, #81c784 100%);
+    color: #1b5e20;
+  }
+  
+  .no-appointments {
+    text-align: center;
+    padding: 40px;
+    color: #6c757d;
+  }
+  
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: #6c757d;
+  }
+  
+  .appointment-tooltip {
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    min-width: 200px;
+    font-size: 0.9rem;
+  }
+  
+  /* Week View Styles */
+  .week-view {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .week-day {
+    background: white;
+    min-height: 400px;
+    padding: 12px 8px;
+    border: 1px solid #e9ecef;
+    position: relative;
+  }
+  
+  .week-day.today {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+  }
+  
+  .week-day-header {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    text-align: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .week-day-date {
+    font-size: 1.2rem;
+    margin-bottom: 4px;
+  }
+  
+  .week-day-name {
+    font-size: 0.9rem;
+    color: #6c757d;
+  }
+  
+  .week-day.today .week-day-header {
+    color: #667eea;
+  }
+  
+  /* Day View Styles */
+  .day-view {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  
+  .day-header {
+    text-align: center;
+    padding: 20px 0;
+    border-bottom: 2px solid #e9ecef;
+    margin-bottom: 20px;
+  }
+  
+  .day-date {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 4px;
+  }
+  
+  .day-name {
+    font-size: 1.1rem;
+    color: #6c757d;
+  }
+  
+  .day-appointments {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .day-appointment {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  .day-appointment:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  .appointment-time-block {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    min-width: 80px;
+    text-align: center;
+  }
+  
+  .appointment-time-block.next-visit {
+    background: linear-gradient(135deg, #ffb74d 0%, #ffa726 100%);
+    color: #2c3e50;
+  }
+  
+  .appointment-time-block.past-visit {
+    background: linear-gradient(135deg, #a5d6a7 0%, #81c784 100%);
+    color: #1b5e20;
+  }
+  
+  .appointment-details h6 {
+    margin: 0 0 4px 0;
+    color: #2c3e50;
+    font-weight: 600;
+  }
+  
+  .appointment-details small {
+    color: #6c757d;
+  }
+  
+  @media (max-width: 768px) {
+    .calendar-day {
+      min-height: 80px;
+      padding: 4px;
+    }
+    
+    .appointment {
+      font-size: 0.7rem;
+      padding: 1px 4px;
+    }
+    
+    .calendar-header {
+      padding: 16px 20px;
+      flex-direction: column;
+      gap: 16px;
+    }
+  }
+</style>
+
+<div class="calendar-container">
+  <div class="calendar-header">
+    <h1 class="calendar-title">
+      <i class="bi bi-calendar3"></i>
+      Patient Calendar
+    </h1>
+    <div class="calendar-controls">
+      <button class="calendar-btn" id="newAppointmentBtn">
+        <i class="bi bi-plus-circle me-1"></i> New Appointment
+      </button>
+      <div class="view-selector me-3">
+        <button class="calendar-btn view-btn active" data-view="month">Month</button>
+        <button class="calendar-btn view-btn" data-view="week">Week</button>
+        <button class="calendar-btn view-btn" data-view="day">Day</button>
+      </div>
+      <select id="filterType" class="form-select calendar-btn">
+        <option value="all">All Appointments</option>
+        <option value="upcoming">Upcoming Only</option>
+        <option value="today">Today</option>
+        <option value="week">This Week</option>
+      </select>
+      <button class="calendar-btn" id="todayBtn">Today</button>
+    </div>
+  </div>
+
+  <div class="simple-calendar">
+    <div class="calendar-nav">
+      <button class="nav-btn" id="prevBtn">
+        <i class="bi bi-chevron-left"></i> Previous
+      </button>
+      <div class="month-year" id="monthYear"></div>
+      <button class="nav-btn" id="nextBtn">
+        Next <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+    
+    <div id="calendarContent">
+      <div class="loading">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="mt-2">Loading appointments...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Appointment Modal -->
+<div class="modal fade" id="appointmentModal" tabindex="-1" aria-labelledby="appointmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <h5 class="modal-title" id="appointmentModalLabel">
+          <i class="bi bi-calendar-plus me-2"></i>Schedule New Appointment
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="appointmentForm">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="patientSelect" class="form-label fw-semibold">
+                <i class="bi bi-person me-1"></i>Patient
+              </label>
+              <select class="form-select" id="patientSelect" name="patient_id" required>
+                <option value="">Select a patient...</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="appointmentDate" class="form-label fw-semibold">
+                <i class="bi bi-calendar me-1"></i>Date & Time
+              </label>
+              <input type="datetime-local" class="form-control" id="appointmentDate" name="appointment_date" required>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="appointmentType" class="form-label fw-semibold">
+              <i class="bi bi-tag me-1"></i>Appointment Type
+            </label>
+            <select class="form-select" id="appointmentType" name="appointment_type" required>
+              <option value="">Select type...</option>
+              <option value="consultation">Consultation</option>
+              <option value="checkup">Check-up</option>
+              <option value="follow_up">Follow-up</option>
+              <option value="emergency">Emergency</option>
+              <option value="treatment">Treatment</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="appointmentNotes" class="form-label fw-semibold">
+              <i class="bi bi-note-text me-1"></i>Notes (Optional)
+            </label>
+            <textarea class="form-control" id="appointmentNotes" name="notes" rows="3" placeholder="Add any special notes or instructions for this appointment..."></textarea>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="estimatedDuration" class="form-label fw-semibold">
+                <i class="bi bi-clock me-1"></i>Estimated Duration
+              </label>
+              <select class="form-select" id="estimatedDuration" name="duration">
+                <option value="30">30 minutes</option>
+                <option value="45">45 minutes</option>
+                <option value="60" selected>1 hour</option>
+                <option value="90">1.5 hours</option>
+                <option value="120">2 hours</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="appointmentPriority" class="form-label fw-semibold">
+                <i class="bi bi-exclamation-circle me-1"></i>Priority
+              </label>
+              <select class="form-select" id="appointmentPriority" name="priority">
+                <option value="normal" selected>Normal</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i>Cancel
+        </button>
+        <button type="button" class="btn btn-primary" id="saveAppointmentBtn">
+          <i class="bi bi-check-circle me-1"></i>Schedule Appointment
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+class SimpleCalendar {
+  constructor() {
+    this.currentDate = new Date();
+    this.appointments = [];
+    this.currentView = 'month';
+    this.monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    this.dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    this.dayNamesLong = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    
+    this.init();
+  }
+  
+  init() {
+    this.loadAppointments();
+    this.loadPatients();
+    this.setupEventListeners();
+  }
+  
+  async loadPatients() {
+    try {
+      const response = await fetch('/api/patients');
+      if (response.ok) {
+        const patients = await response.json();
+        const patientSelect = document.getElementById('patientSelect');
+        patientSelect.innerHTML = '<option value="">Select a patient...</option>';
+        
+        patients.forEach(patient => {
+          const option = document.createElement('option');
+          option.value = patient.id;
+          option.textContent = patient.name;
+          patientSelect.appendChild(option);
+        });
+      }
+    } catch (error) {
+      console.error('Error loading patients:', error);
+    }
+  }
+  
+  setupEventListeners() {
+    document.getElementById('prevBtn').addEventListener('click', () => this.navigatePrevious());
+    document.getElementById('nextBtn').addEventListener('click', () => this.navigateNext());
+    document.getElementById('todayBtn').addEventListener('click', () => this.goToToday());
+    document.getElementById('filterType').addEventListener('change', () => this.render());
+    
+    // New appointment button
+    document.getElementById('newAppointmentBtn').addEventListener('click', () => this.openAppointmentModal());
+    
+    // Save appointment button
+    document.getElementById('saveAppointmentBtn').addEventListener('click', () => this.saveAppointment());
+    
+    // View selector buttons
+    document.querySelectorAll('.view-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        this.currentView = e.target.dataset.view;
+        this.render();
+      });
+    });
+  }
+  
+  async loadAppointments() {
+    try {
+      const response = await fetch('/calendar/events');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      this.appointments = await response.json();
+      this.render();
+    } catch (error) {
+      console.error('Error loading appointments:', error);
+      document.getElementById('calendarContent').innerHTML = `
+        <div class="alert alert-danger text-center">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          Failed to load appointments: ${error.message}
+        </div>
+      `;
+    }
+  }
+  
+  navigatePrevious() {
+    switch(this.currentView) {
+      case 'month':
+        this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+        break;
+      case 'week':
+        this.currentDate.setDate(this.currentDate.getDate() - 7);
+        break;
+      case 'day':
+        this.currentDate.setDate(this.currentDate.getDate() - 1);
+        break;
+    }
+    this.render();
+  }
+  
+  navigateNext() {
+    switch(this.currentView) {
+      case 'month':
+        this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+        break;
+      case 'week':
+        this.currentDate.setDate(this.currentDate.getDate() + 7);
+        break;
+      case 'day':
+        this.currentDate.setDate(this.currentDate.getDate() + 1);
+        break;
+    }
+    this.render();
+  }
+  
+  goToToday() {
+    this.currentDate = new Date();
+    this.render();
+  }
+  
+  render() {
+    this.updateHeader();
+    this.renderCalendar();
+  }
+  
+  updateHeader() {
+    let headerText = '';
+    switch(this.currentView) {
+      case 'month':
+        headerText = `${this.monthNames[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`;
+        break;
+      case 'week':
+        const weekStart = this.getWeekStart(this.currentDate);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        
+        if (weekStart.getMonth() === weekEnd.getMonth()) {
+          headerText = `${this.monthNames[weekStart.getMonth()]} ${weekStart.getDate()}-${weekEnd.getDate()}, ${weekStart.getFullYear()}`;
+        } else {
+          headerText = `${this.monthNames[weekStart.getMonth()]} ${weekStart.getDate()} - ${this.monthNames[weekEnd.getMonth()]} ${weekEnd.getDate()}, ${weekStart.getFullYear()}`;
+        }
+        break;
+      case 'day':
+        headerText = `${this.dayNamesLong[this.currentDate.getDay()]}, ${this.monthNames[this.currentDate.getMonth()]} ${this.currentDate.getDate()}, ${this.currentDate.getFullYear()}`;
+        break;
+    }
+    document.getElementById('monthYear').textContent = headerText;
+  }
+  
+  renderCalendar() {
+    switch(this.currentView) {
+      case 'month':
+        this.renderMonthView();
+        break;
+      case 'week':
+        this.renderWeekView();
+        break;
+      case 'day':
+        this.renderDayView();
+        break;
+    }
+  }
+  
+  renderMonthView() {
+    const today = new Date();
+    const firstDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
+    const lastDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    let html = '<div class="calendar-grid">';
+    
+    // Day headers
+    this.dayNames.forEach(day => {
+      html += `<div class="calendar-day-header">${day}</div>`;
+    });
+    
+    // Calendar days
+    const currentDate = new Date(startDate);
+    for (let week = 0; week < 6; week++) {
+      for (let day = 0; day < 7; day++) {
+        const isCurrentMonth = currentDate.getMonth() === this.currentDate.getMonth();
+        const isToday = this.isSameDay(currentDate, today);
+        const dayAppointments = this.getAppointmentsForDay(currentDate);
+        
+        let dayClass = 'calendar-day';
+        if (isToday) dayClass += ' today';
+        if (!isCurrentMonth) dayClass += ' other-month';
+        
+        html += `<div class="${dayClass}">`;
+        html += `<div class="day-number">${currentDate.getDate()}</div>`;
+        
+        dayAppointments.forEach(appointment => {
+          const appointmentClass = this.getAppointmentClass(appointment);
+          const time = this.formatTime(appointment.start);
+          html += `<a href="/patient/${appointment.extendedProps.patient_id}" class="appointment ${appointmentClass}" title="${appointment.title} at ${time}">
+            <div>${time}</div>
+            <div>${appointment.title}</div>
+          </a>`;
+        });
+        
+        html += '</div>';
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    }
+    
+    html += '</div>';
+    
+    if (this.appointments.length === 0) {
+      html = `
+        <div class="no-appointments">
+          <i class="bi bi-calendar-x fs-1 text-muted"></i>
+          <h5 class="mt-3">No appointments found</h5>
+          <p>Add some patients and visits to see them here.</p>
+        </div>
+      `;
+    }
+    
+    document.getElementById('calendarContent').innerHTML = html;
+  }
+  
+  renderWeekView() {
+    const weekStart = this.getWeekStart(this.currentDate);
+    const today = new Date();
+    
+    let html = '<div class="week-view">';
+    
+    for (let i = 0; i < 7; i++) {
+      const currentDay = new Date(weekStart);
+      currentDay.setDate(weekStart.getDate() + i);
+      
+      const isToday = this.isSameDay(currentDay, today);
+      const dayAppointments = this.getAppointmentsForDay(currentDay);
+      
+      let dayClass = 'week-day';
+      if (isToday) dayClass += ' today';
+      
+      html += `<div class="${dayClass}">`;
+      html += `<div class="week-day-header">`;
+      html += `<div class="week-day-date">${currentDay.getDate()}</div>`;
+      html += `<div class="week-day-name">${this.dayNames[currentDay.getDay()]}</div>`;
+      html += `</div>`;
+      
+      dayAppointments.forEach(appointment => {
+        const appointmentClass = this.getAppointmentClass(appointment);
+        const time = this.formatTime(appointment.start);
+        html += `<a href="/patient/${appointment.extendedProps.patient_id}" class="appointment ${appointmentClass}" title="${appointment.title} at ${time}">
+          <div>${time}</div>
+          <div>${appointment.title}</div>
+        </a>`;
+      });
+      
+      html += '</div>';
+    }
+    
+    html += '</div>';
+    
+    if (this.appointments.length === 0) {
+      html = this.getNoAppointmentsMessage();
+    }
+    
+    document.getElementById('calendarContent').innerHTML = html;
+  }
+  
+  renderDayView() {
+    const today = new Date();
+    const isToday = this.isSameDay(this.currentDate, today);
+    const dayAppointments = this.getAppointmentsForDay(this.currentDate);
+    
+    let html = '<div class="day-view">';
+    html += '<div class="day-header">';
+    html += `<div class="day-date">${this.currentDate.getDate()}</div>`;
+    html += `<div class="day-name">${this.dayNamesLong[this.currentDate.getDay()]}, ${this.monthNames[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}</div>`;
+    if (isToday) html += '<div class="badge bg-primary mt-2">Today</div>';
+    html += '</div>';
+    
+    html += '<div class="day-appointments">';
+    
+    if (dayAppointments.length === 0) {
+      html += `
+        <div class="text-center py-5">
+          <i class="bi bi-calendar-x fs-1 text-muted"></i>
+          <h5 class="mt-3 text-muted">No appointments today</h5>
+          <p class="text-muted">This day is free of appointments.</p>
+        </div>
+      `;
+    } else {
+      // Sort appointments by time
+      dayAppointments.sort((a, b) => new Date(a.start) - new Date(b.start));
+      
+      dayAppointments.forEach(appointment => {
+        const appointmentClass = this.getAppointmentClass(appointment);
+        const time = this.formatTime(appointment.start);
+        const diagnosis = appointment.extendedProps.diagnosis || 'No diagnosis';
+        const type = appointment.extendedProps.type === 'next_visit' ? 'Next Visit' : 'Visit';
+        
+        html += `
+          <a href="/patient/${appointment.extendedProps.patient_id}" class="day-appointment">
+            <div class="appointment-time-block ${appointmentClass}">
+              ${time}
+            </div>
+            <div class="appointment-details flex-grow-1">
+              <h6>${appointment.title}</h6>
+              <small>${type} • ${diagnosis}</small>
+            </div>
+            <div class="text-end">
+              <i class="bi bi-chevron-right text-muted"></i>
+            </div>
+          </a>
+        `;
+      });
+    }
+    
+    html += '</div></div>';
+    
+    if (this.appointments.length === 0) {
+      html = this.getNoAppointmentsMessage();
+    }
+    
+    document.getElementById('calendarContent').innerHTML = html;
+  }
+  
+  getWeekStart(date) {
+    const start = new Date(date);
+    const day = start.getDay();
+    const diff = start.getDate() - day;
+    start.setDate(diff);
+    return start;
+  }
+  
+  getNoAppointmentsMessage() {
+    return `
+      <div class="no-appointments">
+        <i class="bi bi-calendar-x fs-1 text-muted"></i>
+        <h5 class="mt-3">No appointments found</h5>
+        <p>Add some patients and visits to see them here.</p>
+      </div>
+    `;
+  }
+  
+  getAppointmentsForDay(date) {
+    const filterType = document.getElementById('filterType').value;
+    const today = new Date();
+    
+    return this.appointments.filter(appointment => {
+      const appointmentDate = new Date(appointment.start);
+      const isSameDay = this.isSameDay(appointmentDate, date);
+      
+      if (!isSameDay) return false;
+      
+      switch (filterType) {
+        case 'upcoming':
+          return appointmentDate >= today;
+        case 'today':
+          return this.isSameDay(appointmentDate, today);
+        case 'week':
+          const weekStart = new Date(today);
+          weekStart.setDate(today.getDate() - today.getDay());
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekStart.getDate() + 7);
+          return appointmentDate >= weekStart && appointmentDate < weekEnd;
+        default:
+          return true;
+      }
+    });
+  }
+  
+  getAppointmentClass(appointment) {
+    const appointmentDate = new Date(appointment.start);
+    const now = new Date();
+    
+    if (appointment.extendedProps && appointment.extendedProps.type === 'next_visit') {
+      return 'next-visit';
+    } else if (appointmentDate < now) {
+      return 'past-visit';
+    }
+    return '';
+  }
+  
+  formatTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  }
+  
+  isSameDay(date1, date2) {
+    return date1.getDate() === date2.getDate() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getFullYear() === date2.getFullYear();
+  }
+  
+  openAppointmentModal(selectedDate = null) {
+    const modal = new bootstrap.Modal(document.getElementById('appointmentModal'));
+    
+    // Set default date/time
+    const appointmentDate = document.getElementById('appointmentDate');
+    const defaultDate = selectedDate || new Date();
+    
+    // Set to next hour on the hour
+    defaultDate.setHours(defaultDate.getHours() + 1, 0, 0, 0);
+    
+    // Format for datetime-local input
+    const year = defaultDate.getFullYear();
+    const month = String(defaultDate.getMonth() + 1).padStart(2, '0');
+    const day = String(defaultDate.getDate()).padStart(2, '0');
+    const hours = String(defaultDate.getHours()).padStart(2, '0');
+    const minutes = String(defaultDate.getMinutes()).padStart(2, '0');
+    
+    appointmentDate.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    
+    // Reset form
+    document.getElementById('appointmentForm').reset();
+    appointmentDate.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    
+    modal.show();
+  }
+  
+  async saveAppointment() {
+    const form = document.getElementById('appointmentForm');
+    const formData = new FormData(form);
+    
+    // Validate required fields
+    const patientId = formData.get('patient_id');
+    const appointmentDate = formData.get('appointment_date');
+    const appointmentType = formData.get('appointment_type');
+    
+    if (!patientId || !appointmentDate || !appointmentType) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+    
+    const appointmentData = {
+      patient_id: parseInt(patientId),
+      appointment_date: appointmentDate,
+      appointment_type: formData.get('appointment_type'),
+      notes: formData.get('notes') || '',
+      duration: parseInt(formData.get('duration')) || 60,
+      priority: formData.get('priority') || 'normal'
+    };
+    
+    try {
+      const response = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(appointmentData)
+      });
+      
+      if (response.ok) {
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('appointmentModal'));
+        modal.hide();
+        
+        // Reload appointments
+        await this.loadAppointments();
+        
+        // Show success message
+        this.showNotification('Appointment scheduled successfully!', 'success');
+      } else {
+        const error = await response.json();
+        this.showNotification(error.message || 'Failed to schedule appointment', 'error');
+      }
+    } catch (error) {
+      console.error('Error saving appointment:', error);
+      this.showNotification('Failed to schedule appointment', 'error');
+    }
+  }
+  
+  showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 1060; min-width: 300px;';
+    notification.innerHTML = `
+      <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 5000);
+  }
+}
+
+// Initialize calendar when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  new SimpleCalendar();
+});
+</script>
+{% endblock %}

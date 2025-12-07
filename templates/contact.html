@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  .contact-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .contact-card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    margin-bottom: 2rem;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .contact-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+  }
+  
+  .contact-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .contact-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+  }
+  
+  .contact-header h1 {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+  }
+  
+  .contact-header p {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    opacity: 0.9;
+    font-size: 1.1rem;
+  }
+  
+  .contact-body {
+    padding: 2rem;
+  }
+  
+  .contact-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  .contact-item:hover {
+    transform: translateX(10px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  .contact-item.email {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    color: white;
+  }
+  
+  .contact-item.phone {
+    background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+    color: white;
+  }
+  
+  .contact-item.whatsapp {
+    background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+    color: white;
+  }
+  
+  .contact-item.address {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+  
+  .contact-item.hours {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+  }
+  
+  .contact-icon {
+    font-size: 2rem;
+    margin-right: 1rem;
+    min-width: 60px;
+    text-align: center;
+  }
+  
+  .contact-details h5 {
+    margin: 0 0 0.25rem 0;
+    font-weight: 600;
+  }
+  
+  .contact-details p {
+    margin: 0;
+    opacity: 0.9;
+  }
+  
+  .no-contact-info {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+  }
+  
+  .no-contact-info i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  
+  .contact-item:hover .contact-icon {
+    animation: pulse 0.6s ease-in-out;
+  }
+  
+  @media (max-width: 768px) {
+    .contact-container {
+      padding: 10px;
+    }
+    
+    .contact-header {
+      padding: 1.5rem;
+    }
+    
+    .contact-body {
+      padding: 1rem;
+    }
+    
+    .contact-item {
+      flex-direction: column;
+      text-align: center;
+      padding: 1.5rem;
+    }
+    
+    .contact-icon {
+      margin-right: 0;
+      margin-bottom: 1rem;
+    }
+  }
+</style>
+
+<div class="contact-container">
+  <div class="contact-card">
+    <div class="contact-header">
+      <h1><i class="fas fa-headset me-3"></i>Contact Information</h1>
+      <p>Get in touch with our administrative team</p>
+    </div>
+    
+    <div class="contact-body">
+      {% if contact_info %}
+        {% if contact_info.email %}
+          <a href="mailto:{{ contact_info.email }}" class="contact-item email">
+            <div class="contact-icon">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <div class="contact-details">
+              <h5>Email Address</h5>
+              <p>{{ contact_info.email }}</p>
+            </div>
+          </a>
+        {% endif %}
+        
+        {% if contact_info.phone %}
+          <a href="tel:{{ contact_info.phone }}" class="contact-item phone">
+            <div class="contact-icon">
+              <i class="fas fa-phone"></i>
+            </div>
+            <div class="contact-details">
+              <h5>Phone Number</h5>
+              <p>{{ contact_info.phone }}</p>
+            </div>
+          </a>
+        {% endif %}
+        
+        {% if contact_info.phone %}
+          <a href="https://wa.me/{{ contact_info.phone.replace('+', '').replace(' ', '').replace('-', '') }}" target="_blank" class="contact-item whatsapp">
+            <div class="contact-icon">
+              <i class="fab fa-whatsapp"></i>
+            </div>
+            <div class="contact-details">
+              <h5>WhatsApp</h5>
+              <p>{{ contact_info.phone }}</p>
+            </div>
+          </a>
+        {% endif %}
+        
+        {% if contact_info.address %}
+          <div class="contact-item address">
+            <div class="contact-icon">
+              <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <div class="contact-details">
+              <h5>Office Address</h5>
+              <p>{{ contact_info.address }}</p>
+            </div>
+          </div>
+        {% endif %}
+        
+        {% if contact_info.office_hours %}
+          <div class="contact-item hours">
+            <div class="contact-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="contact-details">
+              <h5>Office Hours</h5>
+              <p>{{ contact_info.office_hours }}</p>
+            </div>
+          </div>
+        {% endif %}
+        
+        {% if contact_info.emergency_contact %}
+          <a href="tel:{{ contact_info.emergency_contact }}" class="contact-item phone" style="background: linear-gradient(135deg, #ff4757 0%, #c44569 100%);">
+            <div class="contact-icon">
+              <i class="fas fa-ambulance"></i>
+            </div>
+            <div class="contact-details">
+              <h5>Emergency Contact</h5>
+              <p>{{ contact_info.emergency_contact }}</p>
+            </div>
+          </a>
+        {% endif %}
+      {% else %}
+        <div class="no-contact-info">
+          <i class="fas fa-exclamation-triangle"></i>
+          <h4>No Contact Information Available</h4>
+          <p>The administrator hasn't set up contact information yet.<br>Please check back later or contact your system administrator.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+// Add some interactive effects
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click effects to contact items
+    const contactItems = document.querySelectorAll('.contact-item');
+    contactItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            // Create ripple effect
+            const ripple = document.createElement('div');
+            ripple.style.position = 'absolute';
+            ripple.style.borderRadius = '50%';
+            ripple.style.background = 'rgba(255,255,255,0.3)';
+            ripple.style.transform = 'scale(0)';
+            ripple.style.animation = 'ripple 0.6s linear';
+            ripple.style.pointerEvents = 'none';
+            
+            const rect = this.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+            ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+            
+            this.style.position = 'relative';
+            this.appendChild(ripple);
+            
+            setTimeout(() => {
+                ripple.remove();
+            }, 600);
+        });
+    });
+});
+
+// Add ripple animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes ripple {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

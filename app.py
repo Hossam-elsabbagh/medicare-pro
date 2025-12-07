@@ -884,6 +884,184 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+
+# Contact Information Route
+@app.route('/contact')
+@login_required
+def contact():
+    """Contact information page for doctors"""
+    if not isinstance(current_user, Doctor):
+        flash('Access denied. Doctor privileges required.', 'danger')
+        return redirect(url_for('login'))
+    
+    # Get admin contact info
+    contact_info = AdminContactInfo.get_contact_info()
+    
+    return render_template('contact.html', contact_info=contact_info)
+
+@app.route('/calendar')
+@login_required
+def calendar():
+    """Display the calendar page with patient appointments"""
+    return render_template('calendar_simple.html')
+
+@app.route('/calendar/events')
+@login_required
+def calendar_events():
+    """API endpoint to fetch calendar events for the logged-in doctor"""
+    try:
+        # Get current date for filtering
+        today = datetime.today().date()
+        
+        # Fetch all visits for this doctor
+        visits = (Visit.query.join(Patient)
+                  .filter(Patient.doctor_id == current_user.id)
+                  .all())
+        
+        # Fetch all appointments for this doctor
+        appointments = (Appointment.query.join(Patient)
+                       .filter(Patient.doctor_id == current_user.id)
+                       .filter(Appointment.status == 'scheduled')
+                       .all())
+        
+        events = []
+        
+        # Add actual visits
+        for visit in visits:
+            events.append({
+                'id': f'visit-{visit.id}',
+                'title': f"{visit.patient.name}",
+                'start': visit.visit_date.isoformat(),
+                'allDay': False,
+                'backgroundColor': '#4fc3f7' if visit.visit_date >= datetime.now() else '#81c784',
+                'borderColor': '#29b6f6' if visit.visit_date >= datetime.now() else '#66bb6a',
+                'textColor': '#fff',
+                'extendedProps': {
+                    'patient_id': visit.patient_id,
+                    'diagnosis': visit.diagnosis or '',
+                    'amount_due': visit.amount_due or 0,
+                    'amount_paid': visit.amount_paid or 0,
+                    'medications': visit.medications or '',
+                    'type': 'visit'
+                }
+            })
+        
+        # Add scheduled appointments
+        for appointment in appointments:
+            events.append({
+                'id': f'appointment-{appointment.id}',
+                'title': f"{appointment.patient.name} ({appointment.appointment_type})",
+                'start': appointment.appointment_date.isoformat(),
+                'allDay': False,
+                'backgroundColor': '#9c27b0',
+                'borderColor': '#7b1fa2',
+                'textColor': '#fff',
+                'extendedProps': {
+                    'patient_id': appointment.patient_id,
+                    'diagnosis': f"{appointment.appointment_type} appointment",
+                    'notes': appointment.notes or '',
+                    'duration': appointment.duration,
+                    'priority': appointment.priority,
+                    'type': 'appointment'
+                }
+            })
+            
+        # Add upcoming patient next_visit appointments (if not already represented by actual visits)
+        patients = Patient.query.filter_by(doctor_id=current_user.id).all()
+        visit_dates = {v.visit_date.date() for v in visits if v.visit_date}
+        
+        for patient in patients:
+            if (patient.next_visit and 
+                patient.next_visit.date() not in visit_dates and 
+                patient.next_visit >= datetime.now()):
+                
+                events.append({
+                    'id': f'next-{patient.id}-{patient.next_visit.isoformat()}',
+                    'title': f"{patient.name} (Next Visit)",
+                    'start': patient.next_visit.isoformat(),
+                    'allDay': False,
+                    'backgroundColor': '#ffb74d',
+                    'borderColor': '#ffa726',
+                    'textColor': '#2c3e50',
+                    'extendedProps': {
+                        'patient_id': patient.id,
+                        'diagnosis': patient.diagnosis or '',
+                        'amount_due': patient.amount_due or 0,
+                        'amount_paid': patient.amount_paid or 0,
+                        'type': 'next_visit'
+                    }
+                })
+        
+        return jsonify(events)
+        
+    except Exception as e:
+        print(f"Error in calendar_events: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/debug/data')
+@login_required
+def debug_data():
+    """Debug endpoint to check what data exists"""
+    try:
+        visits = (Visit.query.join(Patient)
+                  .filter(Patient.doctor_id == current_user.id)
+                  .all())
+        
+        patients = Patient.query.filter_by(doctor_id=current_user.id).all()
+        
+        visit_data = []
+        for visit in visits:
+            visit_data.append({
+                'id': visit.id,
+                'patient_name': visit.patient.name,
+                'visit_date': visit.visit_date.isoformat() if visit.visit_date else None,
+                'diagnosis': visit.diagnosis
+            })
+        
+        patient_data = []
+        for patient in patients:
+            patient_data.append({
+                'id': patient.id,
+                'name': patient.name,
+                'next_visit': patient.next_visit.isoformat() if patient.next_visit else None
+            })
+        
+        return jsonify({
+            'visits_count': len(visits),
+            'patients_count': len(patients),
+            'visits': visit_data,
+            'patients': patient_data,
+            'current_user_id': current_user.id
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+                        
+
+# Global template context processor
+@app.context_processor
+def inject_global_vars():
+    """Inject global variables available to all templates"""
+    try:
+        # Get contact information for footer
+        contact_info = AdminContactInfo.get_contact_info()
+        
+        # Get current year
+        from datetime import datetime
+        current_year = datetime.now().year
+        
+        return {
+            'contact_info': contact_info,
+            'current_year': current_year
+        }
+    except Exception as e:
+        # Return defaults if there's any error
+        from datetime import datetime
+        return {
+            'contact_info': None,
+            'current_year': datetime.now().year
+        }
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
