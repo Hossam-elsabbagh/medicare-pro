@@ -27,6 +27,7 @@ class PatientForm(FlaskForm):
     diagnosis = TextAreaField('Initial Diagnosis', validators=[Optional()])
     submit = SubmitField('Add Patient')
 
+    
 class EditPatientForm(FlaskForm):
     name = StringField('Patient Name', validators=[DataRequired()])
     phone = StringField('Phone', validators=[DataRequired()])
