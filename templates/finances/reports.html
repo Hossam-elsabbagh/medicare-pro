@@ -1,0 +1,414 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  .report-card {
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .metric-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+  }
+  .metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+  }
+  .chart-container {
+    position: relative;
+    height: 300px;
+  }
+</style>
+
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 text-primary fw-bold mb-1">
+        <i class="bi bi-file-earmark-bar-graph me-2"></i>Financial Reports
+      </h1>
+      <p class="text-muted mb-0">Analyze your clinic's financial performance</p>
+    </div>
+    <div>
+      <button class="btn btn-outline-primary" onclick="window.print()">
+        <i class="bi bi-printer me-1"></i>Print Report
+      </button>
+      <button class="btn btn-success ms-2" onclick="exportToCSV()">
+        <i class="bi bi-file-earmark-excel me-1"></i>Export CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Date Range Selector -->
+  <div class="report-card">
+    <form method="POST" class="row align-items-end">
+      {{ form.hidden_tag() }}
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">{{ form.start_date.label.text }}</label>
+        {{ form.start_date(class="form-control") }}
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">{{ form.end_date.label.text }}</label>
+        {{ form.end_date(class="form-control") }}
+      </div>
+      <div class="col-md-3">
+        {{ form.submit(class="btn btn-primary") }}
+      </div>
+      <div class="col-md-3 text-end">
+        <div class="btn-group">
+          <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('today')">Today</button>
+          <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('week')">This Week</button>
+          <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('month')">This Month</button>
+          <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('year')">This Year</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Summary Metrics -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="metric-card bg-success">
+        <div class="metric-value">${{ "%.2f"|format(total_income) }}</div>
+        <div>Total Income</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="metric-card bg-danger">
+        <div class="metric-value">${{ "%.2f"|format(total_expenses) }}</div>
+        <div>Total Expenses</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="metric-card {{ 'bg-success' if net_profit >= 0 else 'bg-danger' }}">
+        <div class="metric-value">${{ "%.2f"|format(net_profit) }}</div>
+        <div>Net Profit</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="metric-card bg-info">
+        <div class="metric-value">{{ transactions|length }}</div>
+        <div>Total Transactions</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Period -->
+  <div class="report-card">
+    <h5 class="text-primary mb-3">
+      <i class="bi bi-calendar-range me-2"></i>Report Period
+    </h5>
+    <p class="h6">{{ start_date.strftime('%B %d, %Y') }} - {{ end_date.strftime('%B %d, %Y') }}</p>
+  </div>
+
+  <!-- Income Breakdown -->
+  {% if income_by_category %}
+  <div class="row">
+    <div class="col-md-6">
+      <div class="report-card">
+        <h5 class="text-success mb-3">
+          <i class="bi bi-arrow-up-circle me-2"></i>Income Breakdown
+        </h5>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th class="text-end">Amount</th>
+                <th class="text-end">%</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for category, amount in income_by_category.items() %}
+              <tr>
+                <td>{{ category }}</td>
+                <td class="text-end text-success fw-semibold">${{ "%.2f"|format(amount) }}</td>
+                <td class="text-end">{{ "%.1f"|format((amount / total_income * 100) if total_income > 0 else 0) }}%</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6">
+      <div class="report-card">
+        <h5 class="text-success mb-3">Income Categories Chart</h5>
+        <div class="chart-container">
+          <canvas id="incomeChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Expense Breakdown -->
+  {% if expense_by_category %}
+  <div class="row">
+    <div class="col-md-6">
+      <div class="report-card">
+        <h5 class="text-danger mb-3">
+          <i class="bi bi-arrow-down-circle me-2"></i>Expense Breakdown
+        </h5>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th class="text-end">Amount</th>
+                <th class="text-end">%</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for category, amount in expense_by_category.items() %}
+              <tr>
+                <td>{{ category }}</td>
+                <td class="text-end text-danger fw-semibold">${{ "%.2f"|format(amount) }}</td>
+                <td class="text-end">{{ "%.1f"|format((amount / total_expenses * 100) if total_expenses > 0 else 0) }}%</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6">
+      <div class="report-card">
+        <h5 class="text-danger mb-3">Expense Categories Chart</h5>
+        <div class="chart-container">
+          <canvas id="expenseChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Detailed Transactions -->
+  {% if transactions %}
+  <div class="report-card">
+    <h5 class="text-primary mb-3">
+      <i class="bi bi-list-ul me-2"></i>Detailed Transactions
+    </h5>
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th class="text-end">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for transaction in transactions %}
+          <tr>
+            <td>{{ transaction.transaction_date.strftime('%b %d, %Y') }}</td>
+            <td>
+              <span class="badge {{ 'bg-success' if transaction.transaction_type == 'income' else 'bg-danger' }}">
+                {{ transaction.transaction_type.title() }}
+              </span>
+            </td>
+            <td>{{ transaction.category }}</td>
+            <td>{{ transaction.description[:50] }}{% if transaction.description|length > 50 %}...{% endif %}</td>
+            <td class="text-end {{ 'text-success' if transaction.transaction_type == 'income' else 'text-danger' }} fw-semibold">
+              {{ '+' if transaction.transaction_type == 'income' else '-' }}${{ "%.2f"|format(transaction.amount) }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Empty State -->
+  {% if not transactions %}
+  <div class="report-card text-center py-5">
+    <i class="bi bi-bar-chart text-muted" style="font-size: 4rem;"></i>
+    <h4 class="text-muted mt-3">No Data for Selected Period</h4>
+    <p class="text-muted">Try selecting a different date range or add some transactions.</p>
+    <a href="{{ url_for('add_financial_transaction') }}" class="btn btn-primary">
+      <i class="bi bi-plus-circle me-1"></i>Add Transaction
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+{% if income_by_category %}
+const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+new Chart(incomeCtx, {
+  type: 'doughnut',
+  data: {
+    labels: {{ income_by_category.keys() | list | tojson }},
+    datasets: [{
+      data: {{ income_by_category.values() | list | tojson }},
+      backgroundColor: [
+        '#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#d1fae5'
+      ]
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom'
+      }
+    }
+  }
+});
+{% endif %}
+
+{% if expense_by_category %}
+const expenseCtx = document.getElementById('expenseChart').getContext('2d');
+new Chart(expenseCtx, {
+  type: 'doughnut',
+  data: {
+    labels: {{ expense_by_category.keys() | list | tojson }},
+    datasets: [{
+      data: {{ expense_by_category.values() | list | tojson }},
+      backgroundColor: [
+        '#ef4444', '#f87171', '#fca5a5', '#fecaca', '#fee2e2'
+      ]
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom'
+      }
+    }
+  }
+});
+{% endif %}
+
+function exportToCSV() {
+  // Show loading indicator
+  const exportBtn = document.querySelector('button[onclick="exportToCSV()"]');
+  const originalText = exportBtn.innerHTML;
+  exportBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Exporting...';
+  exportBtn.disabled = true;
+  
+  // Get current date range from the form
+  const startDate = document.querySelector('input[name="start_date"]').value;
+  const endDate = document.querySelector('input[name="end_date"]').value;
+  
+  // Build export URL with date parameters
+  let exportUrl = '/finances/reports/export-csv';
+  if (startDate && endDate) {
+    exportUrl += `?start_date=${startDate}&end_date=${endDate}`;
+  }
+  
+  // Create a temporary link and trigger download
+  const link = document.createElement('a');
+  link.href = exportUrl;
+  link.download = ''; // Filename will be set by the server
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  // Reset button after a short delay
+  setTimeout(() => {
+    exportBtn.innerHTML = originalText;
+    exportBtn.disabled = false;
+  }, 2000);
+  
+  // Show success message
+  setTimeout(() => {
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-success alert-dismissible fade show position-fixed';
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alert.innerHTML = `
+      <i class="bi bi-check-circle me-2"></i>CSV export completed successfully!
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+      if (alert.parentNode) {
+        alert.parentNode.removeChild(alert);
+      }
+    }, 3000);
+  }, 500);
+}
+
+function setDateRange(period) {
+  const startDateInput = document.querySelector('input[name="start_date"]');
+  const endDateInput = document.querySelector('input[name="end_date"]');
+  
+  if (!startDateInput || !endDateInput) {
+    console.error('Date inputs not found');
+    return;
+  }
+  
+  const today = new Date();
+  let startDate, endDate;
+  
+  switch(period) {
+    case 'today':
+      startDate = new Date(today);
+      endDate = new Date(today);
+      break;
+      
+    case 'week':
+      // Get start of current week (Monday)
+      const currentDay = today.getDay();
+      const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+      startDate = new Date(today);
+      startDate.setDate(today.getDate() + mondayOffset);
+      endDate = new Date();
+      break;
+      
+    case 'month':
+      // First day of current month to today
+      startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+      endDate = new Date();
+      break;
+      
+    case 'year':
+      // First day of current year to today
+      startDate = new Date(today.getFullYear(), 0, 1);
+      endDate = new Date();
+      break;
+      
+    default:
+      return;
+  }
+  
+  // Format dates as YYYY-MM-DD for HTML date inputs
+  startDateInput.value = startDate.toISOString().split('T')[0];
+  endDateInput.value = endDate.toISOString().split('T')[0];
+  
+  // Add visual feedback to show which filter is active
+  document.querySelectorAll('.btn-group .btn').forEach(btn => {
+    btn.classList.remove('active', 'btn-primary');
+    btn.classList.add('btn-outline-secondary');
+  });
+  
+  // Highlight the active filter button
+  if (event && event.target) {
+    event.target.classList.remove('btn-outline-secondary');
+    event.target.classList.add('btn-primary', 'active');
+  }
+  
+  // Automatically submit the form to refresh the report
+  setTimeout(() => {
+    document.querySelector('form').submit();
+  }, 100);
+}
+</script>
+{% endblock %}

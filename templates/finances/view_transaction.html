@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border-radius: 0.5rem;
+    }
+    .detail-label {
+        font-weight: 600;
+        color: #6c757d;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .detail-value {
+        font-size: 1.1rem;
+        color: #2c3e50;
+        margin-bottom: 1.5rem;
+    }
+    .amount-income {
+        color: #28a745;
+        font-weight: bold;
+        font-size: 1.5rem;
+    }
+    .amount-expense {
+        color: #dc3545;
+        font-weight: bold;
+        font-size: 1.5rem;
+    }
+    .type-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+    .related-info {
+        background-color: #f8f9fa;
+        border-left: 4px solid #007bff;
+        padding: 1rem;
+        border-radius: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-receipt me-2"></i>Transaction Details
+                </h2>
+                <div>
+                    <a href="{{ url_for('edit_financial_transaction', transaction_id=transaction.id) }}" 
+                       class="btn btn-outline-primary me-2">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <button type="button" class="btn btn-outline-danger me-2" 
+                            onclick="confirmDelete()">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                    <a href="{{ url_for('financial_transactions') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Transactions
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Main Transaction Details -->
+                <div class="col-lg-8">
+                    <div class="card detail-card">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>Transaction Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="detail-label">Transaction ID</div>
+                                    <div class="detail-value">#TXN-{{ transaction.id }}</div>
+
+                                    <div class="detail-label">Type</div>
+                                    <div class="detail-value">
+                                        <span class="badge type-badge {% if transaction.transaction_type == 'income' %}bg-success{% else %}bg-danger{% endif %}">
+                                            <i class="fas {% if transaction.transaction_type == 'income' %}fa-arrow-up{% else %}fa-arrow-down{% endif %} me-1"></i>
+                                            {{ transaction.transaction_type.title() }}
+                                        </span>
+                                    </div>
+
+                                    <div class="detail-label">Category</div>
+                                    <div class="detail-value">
+                                        <i class="fas fa-tag me-2 text-muted"></i>{{ transaction.category }}
+                                        {% if transaction.subcategory %}
+                                            <br><small class="text-muted ms-3">{{ transaction.subcategory }}</small>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="detail-label">Payment Method</div>
+                                    <div class="detail-value">
+                                        <i class="fas {% if transaction.payment_method == 'cash' %}fa-money-bill-wave{% elif transaction.payment_method == 'card' %}fa-credit-card{% elif transaction.payment_method == 'bank_transfer' %}fa-university{% else %}fa-wallet{% endif %} me-2 text-muted"></i>
+                                        {{ transaction.payment_method.replace('_', ' ').title() }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-label">Amount</div>
+                                    <div class="detail-value">
+                                        <span class="{% if transaction.transaction_type == 'income' %}amount-income{% else %}amount-expense{% endif %}">
+                                            {% if transaction.transaction_type == 'expense' %}-{% endif %}${{ "%.2f"|format(transaction.amount) }}
+                                        </span>
+                                    </div>
+
+                                    <div class="detail-label">Transaction Date</div>
+                                    <div class="detail-value">
+                                        <i class="fas fa-calendar-alt me-2 text-muted"></i>
+                                        {{ transaction.transaction_date.strftime('%B %d, %Y at %I:%M %p') }}
+                                    </div>
+
+                                    <div class="detail-label">Created</div>
+                                    <div class="detail-value">
+                                        <i class="fas fa-clock me-2 text-muted"></i>
+                                        {{ transaction.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                    </div>
+
+                                    {% if transaction.updated_at %}
+                                    <div class="detail-label">Last Updated</div>
+                                    <div class="detail-value">
+                                        <i class="fas fa-edit me-2 text-muted"></i>
+                                        {{ transaction.updated_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            {% if transaction.description %}
+                            <div class="mt-3">
+                                <div class="detail-label">Description</div>
+                                <div class="detail-value">{{ transaction.description }}</div>
+                            </div>
+                            {% endif %}
+
+                            {% if transaction.notes %}
+                            <div class="mt-3">
+                                <div class="detail-label">Notes</div>
+                                <div class="detail-value">{{ transaction.notes }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Related Information Sidebar -->
+                <div class="col-lg-4">
+                    {% if transaction.reference_type and transaction.reference_id %}
+                    <div class="card detail-card mb-3">
+                        <div class="card-header bg-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-link me-2"></i>Related Information
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="related-info">
+                                {% if transaction.reference_type == 'visit' %}
+                                    {% set visit = transaction.visit %}
+                                    {% if visit %}
+                                    <h6><i class="fas fa-user-md me-2"></i>Patient Visit</h6>
+                                    <p class="mb-1"><strong>Patient:</strong> {{ visit.patient.name }}</p>
+                                    <p class="mb-1"><strong>Visit Date:</strong> {{ visit.visit_date.strftime('%B %d, %Y') }}</p>
+                                    <p class="mb-0"><strong>Diagnosis:</strong> {{ visit.diagnosis or 'Not specified' }}</p>
+                                    <a href="{{ url_for('patient_detail', patient_id=visit.patient.id) }}" 
+                                       class="btn btn-sm btn-outline-primary mt-2">
+                                        <i class="fas fa-external-link-alt"></i> View Patient
+                                    </a>
+                                    {% endif %}
+                                {% elif transaction.reference_type == 'patient' %}
+                                    {% set patient = transaction.patient %}
+                                    {% if patient %}
+                                    <h6><i class="fas fa-user me-2"></i>Patient</h6>
+                                    <p class="mb-1"><strong>Name:</strong> {{ patient.name }}</p>
+                                    <p class="mb-0"><strong>Phone:</strong> {{ patient.phone or 'Not provided' }}</p>
+                                    <a href="{{ url_for('patient_detail', patient_id=patient.id) }}" 
+                                       class="btn btn-sm btn-outline-primary mt-2">
+                                        <i class="fas fa-external-link-alt"></i> View Patient
+                                    </a>
+                                    {% endif %}
+                                {% else %}
+                                    <h6><i class="fas fa-file-alt me-2"></i>Manual Entry</h6>
+                                    <p class="mb-0">This transaction was manually created.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Quick Actions -->
+                    <div class="card detail-card">
+                        <div class="card-header bg-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-bolt me-2"></i>Quick Actions
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('edit_financial_transaction', transaction_id=transaction.id) }}" 
+                                   class="btn btn-primary btn-sm">
+                                    <i class="fas fa-edit me-2"></i>Edit Transaction
+                                </a>
+                                <a href="{{ url_for('add_financial_transaction') }}" 
+                                   class="btn btn-success btn-sm">
+                                    <i class="fas fa-plus me-2"></i>Add New Transaction
+                                </a>
+                                <a href="{{ url_for('financial_reports') }}" 
+                                   class="btn btn-info btn-sm">
+                                    <i class="fas fa-chart-line me-2"></i>View Reports
+                                </a>
+                                <hr>
+                                <button type="button" class="btn btn-danger btn-sm" 
+                                        onclick="confirmDelete()">
+                                    <i class="fas fa-trash me-2"></i>Delete Transaction
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this transaction?</p>
+                <div class="alert alert-info">
+                    <strong>Type:</strong> {{ transaction.transaction_type.title() }}<br>
+                    <strong>Category:</strong> {{ transaction.category }}<br>
+                    <strong>Amount:</strong> ${{ "%.2f"|format(transaction.amount) }}<br>
+                    <strong>Date:</strong> {{ transaction.transaction_date.strftime('%B %d, %Y') }}
+                </div>
+                <p class="text-danger"><strong>This action cannot be undone.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('delete_financial_transaction', transaction_id=transaction.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Delete Transaction
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete() {
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  .financial-card {
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .financial-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  }
+  .metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+  }
+  .metric-positive {
+    color: #10b981;
+  }
+  .metric-negative {
+    color: #ef4444;
+  }
+  .metric-neutral {
+    color: #6366f1;
+  }
+  .quick-action-btn {
+    border-radius: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s;
+  }
+</style>
+
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 text-primary fw-bold mb-1">
+        <i class="bi bi-currency-dollar me-2"></i>Financial Dashboard
+      </h1>
+      <p class="text-muted mb-0">Track your clinic's financial performance</p>
+    </div>
+    <div>
+      <a href="{{ url_for('add_financial_transaction') }}" class="btn btn-success quick-action-btn me-2">
+        <i class="bi bi-plus-circle me-1"></i>Add Transaction
+      </a>
+      <a href="{{ url_for('financial_reports') }}" class="btn btn-primary quick-action-btn me-2">
+        <i class="bi bi-file-earmark-bar-graph me-1"></i>Generate Report
+      </a>
+      <button onclick="exportDashboardToCSV()" class="btn btn-outline-success quick-action-btn">
+        <i class="bi bi-file-earmark-excel me-1"></i>Export CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Key Metrics Row -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="financial-card text-center">
+        <div class="metric-value metric-positive">
+          ${{ "%.2f"|format(total_income) }}
+        </div>
+        <div class="text-muted fw-semibold">Total Income</div>
+        <small class="text-muted">All time</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="financial-card text-center">
+        <div class="metric-value metric-negative">
+          ${{ "%.2f"|format(total_expenses) }}
+        </div>
+        <div class="text-muted fw-semibold">Total Expenses</div>
+        <small class="text-muted">All time</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="financial-card text-center">
+        <div class="metric-value {{ 'metric-positive' if total_profit >= 0 else 'metric-negative' }}">
+          ${{ "%.2f"|format(total_profit) }}
+        </div>
+        <div class="text-muted fw-semibold">Net Profit</div>
+        <small class="text-muted">All time</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="financial-card text-center">
+        <div class="metric-value metric-neutral">
+          ${{ "%.2f"|format(patient_revenue) }}
+        </div>
+        <div class="text-muted fw-semibold">Patient Revenue</div>
+        <small class="text-muted">From visits</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly Overview Row -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="financial-card">
+        <h5 class="text-success mb-3">
+          <i class="bi bi-arrow-up-circle me-2"></i>Monthly Income
+        </h5>
+        <div class="metric-value metric-positive mb-2">
+          ${{ "%.2f"|format(monthly_income) }}
+        </div>
+        <small class="text-muted">{{ 'Current month' }}</small>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="financial-card">
+        <h5 class="text-danger mb-3">
+          <i class="bi bi-arrow-down-circle me-2"></i>Monthly Expenses
+        </h5>
+        <div class="metric-value metric-negative mb-2">
+          ${{ "%.2f"|format(monthly_expenses) }}
+        </div>
+        <small class="text-muted">{{ 'Current month' }}</small>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="financial-card">
+        <h5 class="{{ 'text-success' if monthly_profit >= 0 else 'text-danger' }} mb-3">
+          <i class="bi bi-graph-up me-2"></i>Monthly Profit
+        </h5>
+        <div class="metric-value {{ 'metric-positive' if monthly_profit >= 0 else 'metric-negative' }} mb-2">
+          ${{ "%.2f"|format(monthly_profit) }}
+        </div>
+        <small class="text-muted">{{ 'Current month' }}</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Transactions -->
+  <div class="row">
+    <div class="col-12">
+      <div class="financial-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0">
+            <i class="bi bi-clock-history me-2"></i>Recent Transactions
+          </h5>
+          <a href="{{ url_for('financial_transactions') }}" class="btn btn-outline-primary btn-sm">
+            View All <i class="bi bi-arrow-right ms-1"></i>
+          </a>
+        </div>
+        
+        {% if recent_transactions %}
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  <th>Method</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for transaction in recent_transactions %}
+                <tr>
+                  <td>{{ transaction.transaction_date.strftime('%b %d, %Y %I:%M %p') }}</td>
+                  <td>
+                    <span class="badge {{ 'bg-success' if transaction.transaction_type == 'income' else 'bg-danger' }}">
+                      <i class="bi bi-{{ 'arrow-up' if transaction.transaction_type == 'income' else 'arrow-down' }} me-1"></i>
+                      {{ transaction.transaction_type.title() }}
+                    </span>
+                  </td>
+                  <td>{{ transaction.category }}</td>
+                  <td>{{ transaction.description[:50] }}{% if transaction.description|length > 50 %}...{% endif %}</td>
+                  <td class="{{ 'text-success' if transaction.transaction_type == 'income' else 'text-danger' }} fw-semibold">
+                    {{ '+' if transaction.transaction_type == 'income' else '-' }}${{ "%.2f"|format(transaction.amount) }}
+                  </td>
+                  <td>
+                    {% if transaction.payment_method %}
+                      <span class="badge bg-light text-dark">{{ transaction.payment_method.replace('_', ' ').title() }}</span>
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-center py-4">
+            <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+            <p class="text-muted mt-3">No transactions recorded yet.</p>
+            <a href="{{ url_for('add_financial_transaction') }}" class="btn btn-primary">
+              <i class="bi bi-plus me-1"></i>Add Your First Transaction
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="financial-card">
+        <h5 class="mb-3">
+          <i class="bi bi-lightning me-2"></i>Quick Actions
+        </h5>
+        <div class="row">
+          <div class="col-md-2 col-6 mb-3">
+            <a href="{{ url_for('add_financial_transaction') }}" class="btn btn-outline-success w-100 quick-action-btn">
+              <i class="bi bi-plus-circle d-block mb-1" style="font-size: 1.5rem;"></i>
+              Add Transaction
+            </a>
+          </div>
+          <div class="col-md-2 col-6 mb-3">
+            <a href="{{ url_for('financial_reports') }}" class="btn btn-outline-primary w-100 quick-action-btn">
+              <i class="bi bi-file-earmark-bar-graph d-block mb-1" style="font-size: 1.5rem;"></i>
+              Generate Report
+            </a>
+          </div>
+          <div class="col-md-2 col-6 mb-3">
+            <a href="{{ url_for('budgets') }}" class="btn btn-outline-warning w-100 quick-action-btn">
+              <i class="bi bi-piggy-bank d-block mb-1" style="font-size: 1.5rem;"></i>
+              Manage Budgets
+            </a>
+          </div>
+          <div class="col-md-2 col-6 mb-3">
+            <a href="{{ url_for('expense_categories') }}" class="btn btn-outline-info w-100 quick-action-btn">
+              <i class="bi bi-tags d-block mb-1" style="font-size: 1.5rem;"></i>
+              Categories
+            </a>
+          </div>
+          <div class="col-md-2 col-6 mb-3">
+            <a href="{{ url_for('financial_transactions') }}" class="btn btn-outline-secondary w-100 quick-action-btn">
+              <i class="bi bi-list-ul d-block mb-1" style="font-size: 1.5rem;"></i>
+              All Transactions
+            </a>
+          </div>
+          <div class="col-md-2 col-6 mb-3">
+            <button class="btn btn-outline-dark w-100 quick-action-btn" onclick="window.print()">
+              <i class="bi bi-printer d-block mb-1" style="font-size: 1.5rem;"></i>
+              Print Summary
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function exportDashboardToCSV() {
+  // Export current month data by default
+  const now = new Date();
+  const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endDate = now;
+  
+  const startDateStr = startDate.toISOString().split('T')[0];
+  const endDateStr = endDate.toISOString().split('T')[0];
+  
+  const exportUrl = `/finances/reports/export-csv?start_date=${startDateStr}&end_date=${endDateStr}`;
+  
+  // Create a temporary link and trigger download
+  const link = document.createElement('a');
+  link.href = exportUrl;
+  link.download = '';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+</script>
+{% endblock %}

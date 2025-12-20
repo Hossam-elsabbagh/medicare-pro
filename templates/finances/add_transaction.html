@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  .form-card {
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    padding: 2rem;
+  }
+  .form-control, .form-select {
+    border-radius: 0.75rem;
+    border: 2px solid #e5e7eb;
+    padding: 0.75rem 1rem;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  .btn-custom {
+    border-radius: 0.75rem;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+  }
+</style>
+
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Header -->
+      <div class="mb-4 text-center">
+        <h1 class="h3 text-primary fw-bold mb-2">
+          <i class="bi bi-plus-circle me-2"></i>Add Financial Transaction
+        </h1>
+        <p class="text-muted">Record income or expense transactions</p>
+      </div>
+
+      <!-- Form Card -->
+      <div class="form-card">
+        <form method="POST">
+          {{ form.hidden_tag() }}
+          
+          <div class="row">
+            <!-- Transaction Type -->
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold">
+                <i class="bi bi-arrow-up-down me-1"></i>{{ form.transaction_type.label.text }}
+              </label>
+              {{ form.transaction_type(class="form-select", id="transactionType") }}
+            </div>
+
+            <!-- Amount -->
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold">
+                <i class="bi bi-currency-dollar me-1"></i>{{ form.amount.label.text }}
+              </label>
+              {{ form.amount(class="form-control", step="0.01", min="0.01") }}
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Category -->
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold">
+                <i class="bi bi-tag me-1"></i>{{ form.category.label.text }}
+              </label>
+              {{ form.category(class="form-select", id="categorySelect") }}
+            </div>
+
+            <!-- Subcategory -->
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold">
+                <i class="bi bi-tags me-1"></i>{{ form.subcategory.label.text }}
+              </label>
+              {{ form.subcategory(class="form-control", placeholder="Optional subcategory") }}
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              <i class="bi bi-chat-left-text me-1"></i>{{ form.description.label.text }}
+            </label>
+            {{ form.description(class="form-control", rows="3", placeholder="Describe the transaction...") }}
+          </div>
+
+          <div class="row">
+            <!-- Transaction Date -->
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold">
+                <i class="bi bi-calendar me-1"></i>{{ form.transaction_date.label.text }}
+              </label>
+              {{ form.transaction_date(class="form-control") }}
+            </div>
+
+            <!-- Payment Method -->
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold">
+                <i class="bi bi-credit-card me-1"></i>{{ form.payment_method.label.text }}
+              </label>
+              {{ form.payment_method(class="form-select") }}
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold">
+              <i class="bi bi-journal-text me-1"></i>{{ form.notes.label.text }}
+            </label>
+            {{ form.notes(class="form-control", rows="2", placeholder="Additional notes or remarks...") }}
+          </div>
+
+          <!-- Submit Buttons -->
+          <div class="d-flex justify-content-between">
+            <a href="{{ url_for('financial_transactions') }}" class="btn btn-outline-secondary btn-custom">
+              <i class="bi bi-arrow-left me-1"></i>Back to Transactions
+            </a>
+            {{ form.submit(class="btn btn-success btn-custom") }}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const transactionType = document.getElementById('transactionType');
+    const categorySelect = document.getElementById('categorySelect');
+    
+    // Category choices with fallback defaults
+    const defaultIncomeChoices = [
+        ['Patient Payment', 'Patient Payment'],
+        ['Insurance', 'Insurance'],
+        ['Consultation', 'Consultation'],
+        ['Procedure', 'Procedure'],
+        ['Other', 'Other']
+    ];
+    
+    const defaultExpenseChoices = [
+        ['General', 'General'],
+        ['Equipment', 'Equipment'],
+        ['Supplies', 'Supplies'],
+        ['Utilities', 'Utilities'],
+        ['Rent', 'Rent'],
+        ['Staff', 'Staff'],
+        ['Marketing', 'Marketing'],
+        ['Insurance', 'Insurance'],
+        ['Maintenance', 'Maintenance'],
+        ['Other', 'Other']
+    ];
+    
+    // Use backend choices if available, otherwise use defaults
+    const incomeChoices = {{ income_choices | tojson }} || defaultIncomeChoices;
+    const expenseChoices = {{ expense_choices | tojson }} || defaultExpenseChoices;
+    
+    function updateCategories() {
+        const type = transactionType.value;
+        
+        // Clear existing options
+        categorySelect.innerHTML = '';
+        
+        let categories = [];
+        
+        if (type === 'income') {
+            categories = incomeChoices;
+        } else if (type === 'expense') {
+            categories = expenseChoices;
+        }
+        
+        categories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat[0]; // First element is value
+            option.textContent = cat[1]; // Second element is text
+            categorySelect.appendChild(option);
+        });
+    }
+    
+    // Initialize categories on page load
+    updateCategories();
+    
+    // Update categories when transaction type changes
+    transactionType.addEventListener('change', updateCategories);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 text-primary fw-bold mb-1">
+        <i class="bi bi-pencil me-2"></i>Edit Budget
+      </h1>
+      <p class="text-muted mb-0">Modify budget settings for {{ budget.category }}</p>
+    </div>
+    <div>
+      <a href="{{ url_for('budgets') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back to Budgets
+      </a>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <form method="POST">
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-3">
+              {{ form.category.label(class="form-label fw-bold") }}
+              {{ form.category(class="form-select") }}
+              {% if form.category.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.category.errors[0] }}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              {{ form.monthly_limit.label(class="form-label fw-bold") }}
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                {{ form.monthly_limit(class="form-control", step="0.01", min="0") }}
+              </div>
+              {% if form.monthly_limit.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.monthly_limit.errors[0] }}
+                </div>
+              {% endif %}
+              <div class="form-text">Set a realistic monthly spending limit for this category</div>
+            </div>
+
+            <div class="mb-4">
+              {{ form.alert_threshold.label(class="form-label fw-bold") }}
+              <div class="input-group">
+                {{ form.alert_threshold(class="form-control", step="1", min="1", max="100") }}
+                <span class="input-group-text">%</span>
+              </div>
+              {% if form.alert_threshold.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.alert_threshold.errors[0] }}
+                </div>
+              {% endif %}
+              <div class="form-text">Get alerts when spending reaches this percentage (recommended: 80%)</div>
+            </div>
+
+            <!-- Current Budget Status -->
+            <div class="alert alert-info">
+              <h6 class="alert-heading">
+                <i class="bi bi-info-circle me-2"></i>Current Budget Status
+              </h6>
+              <div class="row">
+                <div class="col-sm-6">
+                  <strong>Current Spending:</strong> ${{ "%.2f"|format(budget.current_month_spent) }}
+                </div>
+                <div class="col-sm-6">
+                  <strong>Period:</strong> {{ budget.month }}/{{ budget.year }}
+                </div>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <a href="{{ url_for('budgets') }}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+              <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-circle me-1"></i>Update Budget
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

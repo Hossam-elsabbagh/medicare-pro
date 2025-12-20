@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  .form-card {
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    padding: 2rem;
+  }
+  .form-control, .form-select {
+    border-radius: 0.75rem;
+    border: 2px solid #e5e7eb;
+    padding: 0.75rem 1rem;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  .color-preview {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #e5e7eb;
+    display: inline-block;
+    vertical-align: middle;
+  }
+</style>
+
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <!-- Header -->
+      <div class="mb-4 text-center">
+        <h1 class="h3 text-primary fw-bold mb-2">
+          <i class="bi bi-plus-circle me-2"></i>Add Financial Category
+        </h1>
+        <p class="text-muted">Create a new category to organize your income or expenses</p>
+      </div>
+
+      <!-- Form Card -->
+      <div class="form-card">
+        <form method="POST">
+          {{ form.hidden_tag() }}
+          
+          <!-- Category Name -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              <i class="bi bi-tag me-1"></i>{{ form.name.label.text }}
+            </label>
+            {{ form.name(class="form-control", placeholder="e.g., Medical Equipment") }}
+          </div>
+
+          <!-- Category Type -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              <i class="bi bi-arrow-up-down me-1"></i>{{ form.category_type.label.text }}
+            </label>
+            {{ form.category_type(class="form-select") }}
+            <div class="form-text">Choose whether this is an income or expense category</div>
+          </div>
+
+          <!-- Description -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              <i class="bi bi-chat-left-text me-1"></i>{{ form.description.label.text }}
+            </label>
+            {{ form.description(class="form-control", rows="3", placeholder="Describe what this category includes...") }}
+          </div>
+
+          <!-- Color -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold">
+              <i class="bi bi-palette me-1"></i>{{ form.color.label.text }}
+            </label>
+            <div class="d-flex align-items-center">
+              {{ form.color(class="form-control", style="width: 80px; height: 50px; padding: 5px;", onchange="updateColorPreview(this.value)") }}
+              <span class="color-preview ms-3" id="colorPreview" style="background-color: #6c757d;"></span>
+              <span class="ms-2 text-muted">Choose a color to identify this category</span>
+            </div>
+          </div>
+
+          <!-- Submit Buttons -->
+          <div class="d-flex justify-content-between">
+            <a href="{{ url_for('expense_categories') }}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-1"></i>Back to Categories
+            </a>
+            {{ form.submit(class="btn btn-success") }}
+          </div>
+        </form>
+      </div>
+
+      <!-- Category Examples -->
+      <div class="mt-4">
+        <div class="bg-light rounded p-3">
+          <h6 class="text-primary mb-2">
+            <i class="bi bi-lightbulb me-1"></i>Category Examples
+          </h6>
+          <div class="row small">
+            <div class="col-6">
+              <ul class="list-unstyled mb-0">
+                <li>• Medical Equipment</li>
+                <li>• Office Supplies</li>
+                <li>• Laboratory Costs</li>
+                <li>• Pharmacy Supplies</li>
+              </ul>
+            </div>
+            <div class="col-6">
+              <ul class="list-unstyled mb-0">
+                <li>• Staff Training</li>
+                <li>• Software Licenses</li>
+                <li>• Maintenance & Repairs</li>
+                <li>• Professional Services</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function updateColorPreview(color) {
+  document.getElementById('colorPreview').style.backgroundColor = color;
+}
+
+// Initialize color preview on page load
+document.addEventListener('DOMContentLoaded', function() {
+  const colorInput = document.querySelector('input[type="color"]');
+  updateColorPreview(colorInput.value);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  .form-card {
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    padding: 2rem;
+  }
+  .form-control, .form-select {
+    border-radius: 0.75rem;
+    border: 2px solid #e5e7eb;
+    padding: 0.75rem 1rem;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+</style>
+
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <!-- Header -->
+      <div class="mb-4 text-center">
+        <h1 class="h3 text-primary fw-bold mb-2">
+          <i class="bi bi-plus-circle me-2"></i>Set Budget Limit
+        </h1>
+        <p class="text-muted">Create a monthly spending limit for a category</p>
+      </div>
+
+      <!-- Form Card -->
+      <div class="form-card">
+        <form method="POST">
+          {{ form.hidden_tag() }}
+          
+          <!-- Category -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              <i class="bi bi-tag me-1"></i>{{ form.category.label.text }}
+            </label>
+            {{ form.category(class="form-select") }}
+            <div class="form-text">Select the expense category for this budget</div>
+          </div>
+
+          <!-- Monthly Limit -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              <i class="bi bi-currency-dollar me-1"></i>{{ form.monthly_limit.label.text }}
+            </label>
+            {{ form.monthly_limit(class="form-control", step="0.01", min="0", placeholder="0.00") }}
+            <div class="form-text">Maximum amount you want to spend in this category per month</div>
+          </div>
+
+          <!-- Alert Threshold -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold">
+              <i class="bi bi-exclamation-triangle me-1"></i>{{ form.alert_threshold.label.text }}
+            </label>
+            {{ form.alert_threshold(class="form-control", step="1", min="0", max="100") }}
+            <div class="form-text">You'll be alerted when spending reaches this percentage of your budget</div>
+          </div>
+
+          <!-- Submit Buttons -->
+          <div class="d-flex justify-content-between">
+            <a href="{{ url_for('budgets') }}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-1"></i>Back to Budgets
+            </a>
+            {{ form.submit(class="btn btn-success") }}
+          </div>
+        </form>
+      </div>
+
+      <!-- Budget Examples -->
+      <div class="mt-4">
+        <div class="bg-light rounded p-3">
+          <h6 class="text-primary mb-2">
+            <i class="bi bi-lightbulb me-1"></i>Budget Examples
+          </h6>
+          <div class="row small">
+            <div class="col-6">
+              <ul class="list-unstyled mb-0">
+                <li>• Equipment: $2,000/month</li>
+                <li>• Supplies: $800/month</li>
+                <li>• Utilities: $300/month</li>
+              </ul>
+            </div>
+            <div class="col-6">
+              <ul class="list-unstyled mb-0">
+                <li>• Marketing: $500/month</li>
+                <li>• Maintenance: $400/month</li>
+                <li>• Staff Training: $200/month</li>
+              </ul>
+            </div>
+          </div>
+          <div class="mt-2">
+            <small class="text-muted">
+              <i class="bi bi-info-circle me-1"></i>
+              Tip: Start with conservative estimates and adjust based on your spending patterns.
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

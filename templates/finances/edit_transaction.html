@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Transaction{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border-radius: 0.5rem;
+    }
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+    }
+    .amount-preview {
+        font-size: 1.5rem;
+        font-weight: bold;
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    .amount-income {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    .amount-expense {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-edit me-2"></i>Edit Transaction
+                </h2>
+                <div>
+                    <a href="{{ url_for('view_financial_transaction', transaction_id=transaction.id) }}" 
+                       class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-eye"></i> View Details
+                    </a>
+                    <a href="{{ url_for('financial_transactions') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Transactions
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <div class="card form-card">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-receipt me-2"></i>Transaction Information
+                                <small class="text-muted ms-2">#TXN-{{ transaction.id }}</small>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Amount Preview -->
+                            <div id="amountPreview" class="amount-preview amount-{{ transaction.transaction_type }}">
+                                <span id="amountSign">{% if transaction.transaction_type == 'expense' %}-{% endif %}</span>$<span id="amountValue">{{ "%.2f"|format(transaction.amount) }}</span>
+                            </div>
+
+                            <form method="POST" novalidate>
+                                {{ form.hidden_tag() }}
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.transaction_type.label(class="form-label required-field") }}
+                                            {{ form.transaction_type(class="form-select", onchange="updateAmountPreview(); updateCategoryOptions()") }}
+                                            {% if form.transaction_type.errors %}
+                                                <div class="text-danger small">
+                                                    {% for error in form.transaction_type.errors %}
+                                                        <div>{{ error }}</div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.amount.label(class="form-label required-field") }}
+                                            <div class="input-group">
+                                                <span class="input-group-text">$</span>
+                                                {{ form.amount(class="form-control", step="0.01", min="0", oninput="updateAmountPreview()") }}
+                                            </div>
+                                            {% if form.amount.errors %}
+                                                <div class="text-danger small">
+                                                    {% for error in form.amount.errors %}
+                                                        <div>{{ error }}</div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.category.label(class="form-label required-field") }}
+                                            {{ form.category(class="form-select") }}
+                                            {% if form.category.errors %}
+                                                <div class="text-danger small">
+                                                    {% for error in form.category.errors %}
+                                                        <div>{{ error }}</div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.subcategory.label(class="form-label") }}
+                                            {{ form.subcategory(class="form-control", placeholder="Optional subcategory") }}
+                                            {% if form.subcategory.errors %}
+                                                <div class="text-danger small">
+                                                    {% for error in form.subcategory.errors %}
+                                                        <div>{{ error }}</div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.transaction_date.label(class="form-label required-field") }}
+                                            {{ form.transaction_date(class="form-control") }}
+                                            {% if form.transaction_date.errors %}
+                                                <div class="text-danger small">
+                                                    {% for error in form.transaction_date.errors %}
+                                                        <div>{{ error }}</div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.payment_method.label(class="form-label required-field") }}
+                                            {{ form.payment_method(class="form-select") }}
+                                            {% if form.payment_method.errors %}
+                                                <div class="text-danger small">
+                                                    {% for error in form.payment_method.errors %}
+                                                        <div>{{ error }}</div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.description.label(class="form-label required-field") }}
+                                    {{ form.description(class="form-control", rows="3", placeholder="Brief description of the transaction") }}
+                                    {% if form.description.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.description.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-4">
+                                    {{ form.notes.label(class="form-label") }}
+                                    {{ form.notes(class="form-control", rows="2", placeholder="Additional notes (optional)") }}
+                                    {% if form.notes.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.notes.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        {% if transaction.reference_type and transaction.reference_id %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-link me-1"></i>
+                                            This transaction is linked to a {{ transaction.reference_type }}
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <a href="{{ url_for('view_financial_transaction', transaction_id=transaction.id) }}" 
+                                           class="btn btn-outline-secondary me-2">Cancel</a>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i>Update Transaction
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Original Transaction Info (for reference) -->
+                    <div class="card form-card mt-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="fas fa-history me-2"></i>Original Transaction Details
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-muted">Created:</small><br>
+                                    <strong>{{ transaction.created_at.strftime('%B %d, %Y at %I:%M %p') }}</strong>
+                                </div>
+                                <div class="col-md-6">
+                                    {% if transaction.updated_at %}
+                                    <small class="text-muted">Last Updated:</small><br>
+                                    <strong>{{ transaction.updated_at.strftime('%B %d, %Y at %I:%M %p') }}</strong>
+                                    {% else %}
+                                    <small class="text-muted">Status:</small><br>
+                                    <strong class="text-success">Never modified</strong>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Category options with fallback defaults
+const defaultIncomeChoices = [
+    ['Patient Payment', 'Patient Payment'],
+    ['Insurance', 'Insurance'],
+    ['Consultation', 'Consultation'],
+    ['Procedure', 'Procedure'],
+    ['Other', 'Other']
+];
+
+const defaultExpenseChoices = [
+    ['General', 'General'],
+    ['Equipment', 'Equipment'],
+    ['Supplies', 'Supplies'],
+    ['Utilities', 'Utilities'],
+    ['Rent', 'Rent'],
+    ['Staff', 'Staff'],
+    ['Marketing', 'Marketing'],
+    ['Insurance', 'Insurance'],
+    ['Maintenance', 'Maintenance'],
+    ['Other', 'Other']
+];
+
+// Use backend choices if available, otherwise use defaults
+const incomeChoices = {{ income_choices | tojson }} || defaultIncomeChoices;
+const expenseChoices = {{ expense_choices | tojson }} || defaultExpenseChoices;
+
+const categoryOptions = {
+    'income': incomeChoices,
+    'expense': expenseChoices
+};
+
+function updateCategoryOptions() {
+    const typeSelect = document.getElementById('transaction_type');
+    const categorySelect = document.getElementById('category');
+    const selectedType = typeSelect.value;
+    const currentValue = categorySelect.value; // Preserve current selection
+    
+    // Clear existing options
+    categorySelect.innerHTML = '';
+    
+    // Add new options based on type
+    if (categoryOptions[selectedType]) {
+        categoryOptions[selectedType].forEach(([value, text]) => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = text;
+            if (value === currentValue) {
+                option.selected = true;
+            }
+            categorySelect.appendChild(option);
+        });
+    }
+}
+
+function updateAmountPreview() {
+    const typeSelect = document.getElementById('transaction_type');
+    const amountInput = document.getElementById('amount');
+    const amountPreview = document.getElementById('amountPreview');
+    const amountSign = document.getElementById('amountSign');
+    const amountValue = document.getElementById('amountValue');
+    
+    const type = typeSelect.value;
+    const amount = parseFloat(amountInput.value) || 0;
+    
+    // Update preview classes
+    amountPreview.className = 'amount-preview amount-' + type;
+    
+    // Update sign
+    amountSign.textContent = type === 'expense' ? '-' : '';
+    
+    // Update amount
+    amountValue.textContent = amount.toFixed(2);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateAmountPreview();
+    
+    // Format datetime-local input
+    const dateInput = document.getElementById('transaction_date');
+    if (dateInput && dateInput.value) {
+        // Convert to local datetime format
+        const date = new Date(dateInput.value);
+        const offset = date.getTimezoneOffset();
+        const adjustedDate = new Date(date.getTime() - (offset * 60 * 1000));
+        dateInput.value = adjustedDate.toISOString().slice(0, 16);
+    }
+});
+</script>
+{% endblock %}
