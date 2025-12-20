@@ -1,0 +1,532 @@
+{% extends "superadmin/base.html" %}
+
+{% block title %}Contact Management - Super Admin{% endblock %}
+
+{% block header_title %}Contact Management{% endblock %}
+{% block header_subtitle %}Manage doctor communications and messages{% endblock %}
+
+{% block content %}
+<!-- Statistics Row -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card bg-gradient-primary text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon me-3">
+                        <i class="fas fa-user-md fa-2x"></i>
+                    </div>
+                    <div>
+                        <h3 class="fw-bold mb-0">{{ stats.total_doctors }}</h3>
+                        <p class="mb-0 opacity-75">Total Doctors</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card bg-gradient-warning text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon me-3">
+                        <i class="fas fa-exclamation-circle fa-2x"></i>
+                    </div>
+                    <div>
+                        <h3 class="fw-bold mb-0">{{ stats.unread_messages }}</h3>
+                        <p class="mb-0 opacity-75">Unread Messages</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card bg-gradient-success text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon me-3">
+                        <i class="fas fa-comments fa-2x"></i>
+                    </div>
+                    <div>
+                        <h3 class="fw-bold mb-0">{{ stats.active_conversations }}</h3>
+                        <p class="mb-0 opacity-75">Active Chats</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card bg-gradient-info text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon me-3">
+                        <i class="fas fa-envelope fa-2x"></i>
+                    </div>
+                    <div>
+                        <h3 class="fw-bold mb-0">{{ stats.total_messages }}</h3>
+                        <p class="mb-0 opacity-75">Total Messages</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="stats-card">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold mb-0">
+                    <i class="fas fa-tools text-primary me-2"></i>
+                    Quick Actions
+                </h5>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{{ url_for('superadmin_contact_settings') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-cog me-2"></i>Contact Settings
+                </a>
+                <button class="btn btn-outline-success" onclick="markAllAsRead()">
+                    <i class="fas fa-check-double me-2"></i>Mark All Read
+                </button>
+                <button class="btn btn-outline-info" onclick="refreshData()">
+                    <i class="fas fa-sync-alt me-2"></i>Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Active Conversations -->
+    <div class="col-lg-8 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h5 class="fw-bold mb-0">
+                    <i class="fas fa-comments text-primary me-2"></i>
+                    Doctor Conversations
+                </h5>
+                {% if stats.unread_messages > 0 %}
+                    <span class="badge bg-danger pulse">{{ stats.unread_messages }} unread</span>
+                {% endif %}
+            </div>
+            
+            {% if doctors_with_conversations %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Doctor</th>
+                                <th>Clinic</th>
+                                <th>Status</th>
+                                <th>Unread</th>
+                                <th>Last Message</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doctor in doctors_with_conversations %}
+                            <tr class="{% if doctor_unread_counts.get(doctor.id, 0) > 0 %}table-warning{% endif %}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-md bg-gradient-primary rounded-circle d-flex align-items-center justify-content-center me-3 text-white">
+                                            <span class="fw-bold">
+                                                {{ doctor.first_name[0] }}{{ doctor.last_name[0] }}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <div class="fw-semibold">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</div>
+                                            <small class="text-muted">{{ doctor.email }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if doctor.clinic %}
+                                        <span class="badge bg-info">{{ doctor.clinic.name }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Independent</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if doctor.is_active else 'danger' }}">
+                                        {{ 'Active' if doctor.is_active else 'Inactive' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% set unread = doctor_unread_counts.get(doctor.id, 0) %}
+                                    {% if unread > 0 %}
+                                        <span class="badge bg-warning text-dark">{{ unread }}</span>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {% if doctor.last_login %}
+                                            {{ doctor.last_login.strftime('%b %d, %Y') }}
+                                        {% else %}
+                                            Never
+                                        {% endif %}
+                                    </small>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('superadmin_doctor_chat', doctor_id=doctor.id) }}" 
+                                           class="btn btn-sm btn-primary">
+                                            <i class="fas fa-comment me-1"></i>Chat
+                                        </a>
+                                        {% if unread > 0 %}
+                                            <button class="btn btn-sm btn-outline-success" 
+                                                    onclick="markDoctorAsRead({{ doctor.id }})">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-comments text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+                    </div>
+                    <h6 class="text-muted">No Active Conversations</h6>
+                    <p class="text-muted small">Doctor conversations will appear here when they start chatting</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Form Messages -->
+    <div class="col-lg-4 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h6 class="fw-bold mb-0">
+                    <i class="fas fa-envelope text-success me-2"></i>
+                    Recent Form Messages
+                </h6>
+                <span class="badge bg-success">{{ stats.form_messages }}</span>
+            </div>
+            
+            {% if form_messages %}
+                <div class="message-list" style="max-height: 400px; overflow-y: auto;">
+                    {% for message in form_messages %}
+                    <div class="message-item p-3 mb-2 border rounded {% if not message.is_read %}bg-light border-warning{% endif %}" 
+                         onclick="viewMessage({{ message.id }})">
+                        <div class="d-flex align-items-start">
+                            <div class="avatar-sm bg-gradient-success rounded-circle d-flex align-items-center justify-content-center me-3 text-white flex-shrink-0">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div class="flex-grow-1 min-width-0">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="mb-0 fw-semibold text-truncate">
+                                        Dr. {{ message.doctor.first_name }} {{ message.doctor.last_name }}
+                                    </h6>
+                                    <small class="text-muted">{{ message.created_at.strftime('%m/%d') }}</small>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="badge bg-secondary small">{{ message.subject or 'General' }}</span>
+                                </div>
+                                <p class="mb-1 small text-muted text-truncate">{{ message.message[:80] }}...</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    {% if not message.is_read %}
+                                        <span class="badge bg-warning text-dark">New</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Read</span>
+                                    {% endif %}
+                                    <small class="text-muted">{{ message.created_at.strftime('%I:%M %p') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <div class="mb-3">
+                        <i class="fas fa-inbox text-muted" style="font-size: 3rem; opacity: 0.3;"></i>
+                    </div>
+                    <h6 class="text-muted">No Form Messages</h6>
+                    <p class="text-muted small mb-0">Form submissions will appear here</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Message Details Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="messageModalLabel">
+                    <i class="fas fa-envelope me-2"></i>Message Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="messageModalBody">
+                <div class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Close
+                </button>
+                <button type="button" class="btn btn-success" onclick="markAsRead()" id="markReadBtn">
+                    <i class="fas fa-check me-2"></i>Mark as Read
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<style>
+.avatar-sm {
+    width: 35px;
+    height: 35px;
+    font-size: 0.8rem;
+}
+
+.avatar-md {
+    width: 45px;
+    height: 45px;
+    font-size: 1rem;
+}
+
+.stats-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.message-item {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.message-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+}
+
+.min-width-0 {
+    min-width: 0;
+}
+
+.message-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.message-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.message-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.message-list::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+</style>
+
+<script>
+let currentMessageId = null;
+
+function viewMessage(messageId) {
+    currentMessageId = messageId;
+    
+    // Show modal with loading
+    const modal = new bootstrap.Modal(document.getElementById('messageModal'));
+    modal.show();
+    
+    // Fetch message details
+    fetch(`/superadmin/contact/message/${messageId}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('messageModalBody').innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="fw-bold text-muted">From:</label>
+                            <div>Dr. ${data.message.doctor_name}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-bold text-muted">Email:</label>
+                            <div>${data.message.doctor_email}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="fw-bold text-muted">Subject:</label>
+                            <div>${data.message.subject || 'General Inquiry'}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-bold text-muted">Date:</label>
+                            <div>${data.message.created_at}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="fw-bold text-muted">Message:</label>
+                    <div class="border p-3 bg-light rounded mt-2" style="white-space: pre-wrap;">${data.message.message}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="fw-bold text-muted">Status:</label>
+                    <span class="badge bg-${data.message.is_read ? 'success' : 'warning'}">
+                        ${data.message.is_read ? 'Read' : 'Unread'}
+                    </span>
+                </div>
+            `;
+            
+            // Update mark as read button
+            const markReadBtn = document.getElementById('markReadBtn');
+            if (data.message.is_read) {
+                markReadBtn.style.display = 'none';
+            } else {
+                markReadBtn.style.display = 'inline-block';
+            }
+        } else {
+            document.getElementById('messageModalBody').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error loading message: ${data.error}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error loading message:', error);
+        document.getElementById('messageModalBody').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Error loading message. Please try again.
+            </div>
+        `;
+    });
+}
+
+function markAsRead() {
+    if (!currentMessageId) return;
+    
+    fetch(`/superadmin/contact/mark_read/${currentMessageId}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal and refresh page
+            const modal = bootstrap.Modal.getInstance(document.getElementById('messageModal'));
+            modal.hide();
+            location.reload();
+        } else {
+            alert('Error marking message as read');
+        }
+    })
+    .catch(error => {
+        console.error('Error marking as read:', error);
+        alert('Error marking message as read');
+    });
+}
+
+function markDoctorAsRead(doctorId) {
+    if (confirm('Mark all messages from this doctor as read?')) {
+        fetch(`/superadmin/contact/mark_doctor_read/${doctorId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error marking messages as read');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error marking messages as read');
+        });
+    }
+}
+
+function markAllAsRead() {
+    if (confirm('Mark all messages as read?')) {
+        fetch('/superadmin/contact/mark_all_read', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error marking all messages as read');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error marking all messages as read');
+        });
+    }
+}
+
+function refreshData() {
+    location.reload();
+}
+
+// Auto-refresh every 30 seconds
+setInterval(function() {
+    // Update unread counts without full refresh
+    fetch('/superadmin/contact/unread_count')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.count > 0) {
+            // Update badge if it exists
+            const badge = document.querySelector('.pulse');
+            if (badge) {
+                badge.textContent = data.count + ' unread';
+            }
+        }
+    })
+    .catch(error => console.error('Error checking unread:', error));
+}, 30000);
+</script>
+{% endblock %}

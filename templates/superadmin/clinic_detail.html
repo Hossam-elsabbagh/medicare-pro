@@ -1,0 +1,263 @@
+{% extends "superadmin/base.html" %}
+
+{% block title %}{{ clinic.name }} - Super Admin{% endblock %}
+
+{% block header_title %}{{ clinic.name }}{% endblock %}
+{% block header_subtitle %}Clinic details and management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="stats-card">
+            <div class="text-center mb-4">
+                <div class="stats-icon bg-gradient-primary mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                    <i class="fas fa-hospital"></i>
+                </div>
+                <h4 class="fw-bold">{{ clinic.name }}</h4>
+                <span class="badge badge-custom bg-{{ 'success' if clinic.is_active else 'danger' }} mb-3">
+                    {{ 'Active' if clinic.is_active else 'Inactive' }}
+                </span>
+            </div>
+            
+            <div class="mb-3">
+                <h6 class="text-muted mb-2">Contact Information</h6>
+                {% if clinic.email %}
+                <div class="mb-2">
+                    <i class="fas fa-envelope text-muted me-2"></i>{{ clinic.email }}
+                </div>
+                {% endif %}
+                {% if clinic.phone %}
+                <div class="mb-2">
+                    <i class="fas fa-phone text-muted me-2"></i>{{ clinic.phone }}
+                </div>
+                {% endif %}
+                {% if clinic.address %}
+                <div class="mb-2">
+                    <i class="fas fa-map-marker-alt text-muted me-2"></i>{{ clinic.address }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <h6 class="text-muted mb-2">Subscription Details</h6>
+                <div class="mb-2">
+                    <span class="badge badge-custom bg-{{ 'success' if clinic.subscription_type == 'premium' else 'warning' if clinic.subscription_type == 'basic' else 'primary' }}">
+                        {{ clinic.subscription_type.title() }} Plan
+                    </span>
+                </div>
+                {% if clinic.subscription_end %}
+                <div class="mb-2">
+                    <i class="fas fa-calendar text-muted me-2"></i>
+                    <small>Valid until {{ clinic.subscription_end.strftime('%B %d, %Y') }}</small>
+                </div>
+                {% endif %}
+                <div class="mb-2">
+                    <i class="fas fa-user-md text-muted me-2"></i>
+                    <small>Max {{ clinic.max_doctors }} doctors</small>
+                </div>
+                <div class="mb-2">
+                    <i class="fas fa-users text-muted me-2"></i>
+                    <small>Max {{ clinic.max_patients }} patients</small>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <h6 class="text-muted mb-2">System Information</h6>
+                <div class="mb-2">
+                    <i class="fas fa-calendar-plus text-muted me-2"></i>
+                    <small>Created: {{ clinic.created_at.strftime('%B %d, %Y') }}</small>
+                </div>
+                <div class="mb-2">
+                    <i class="fas fa-hashtag text-muted me-2"></i>
+                    <small>ID: {{ clinic.id }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-8">
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon bg-gradient-success mx-auto mb-2">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">{{ doctors|length }}</h4>
+                    <p class="text-muted mb-0">Registered Doctors</p>
+                    <small class="text-muted">of {{ clinic.max_doctors }} max</small>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon bg-gradient-info mx-auto mb-2">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">{{ patient_count }}</h4>
+                    <p class="text-muted mb-0">Total Patients</p>
+                    <small class="text-muted">of {{ clinic.max_patients }} max</small>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon bg-gradient-warning mx-auto mb-2">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">{{ ((doctors|selectattr('is_active')|list|length / doctors|length * 100) | round(1)) if doctors|length > 0 else 0 }}%</h4>
+                    <p class="text-muted mb-0">Active Doctors</p>
+                    <small class="text-muted">{{ doctors|selectattr('is_active')|list|length }} of {{ doctors|length }}</small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Doctors List -->
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0">Clinic Doctors</h5>
+                <span class="badge bg-light text-dark">{{ doctors|length }} doctors</span>
+            </div>
+            
+            {% if doctors %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Doctor</th>
+                            <th>Contact</th>
+                            <th>Status</th>
+                            <th>Patients</th>
+                            <th>Last Login</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doctor in doctors %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="stats-icon bg-gradient-success me-3" style="width: 35px; height: 35px; font-size: 14px;">
+                                        <i class="fas fa-user-md"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</h6>
+                                        <small class="text-muted">{{ 'Verified' if doctor.verified else 'Unverified' }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <small>
+                                    <div>{{ doctor.email }}</div>
+                                    <div>{{ doctor.phone }}</div>
+                                </small>
+                            </td>
+                            <td>
+                                <span class="badge badge-custom bg-{{ 'success' if doctor.is_active else 'danger' }}">
+                                    {{ 'Active' if doctor.is_active else 'Inactive' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">{{ doctor.patients|length }}</span>
+                            </td>
+                            <td>
+                                {% if doctor.last_login %}
+                                {% set utc_time = doctor.last_login | utc_time %}
+                                <small class="text-muted">{{ utc_time.strftime('%b %d, %I:%M %p') if utc_time else 'Never' }}</small>
+                                {% else %}
+                                <small class="text-muted">Never</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-{{ 'danger' if doctor.is_active else 'success' }}" 
+                                            onclick="toggleDoctorStatus({{ doctor.id }}, {{ doctor.is_active|lower }})"
+                                            title="{{ 'Deactivate' if doctor.is_active else 'Activate' }}">
+                                        <i class="fas fa-{{ 'pause' if doctor.is_active else 'play' }}"></i>
+                                    </button>
+                                    <button class="btn btn-outline-warning" 
+                                            onclick="showResetPasswordModal({{ doctor.id }}, '{{ doctor.first_name }} {{ doctor.last_name }}')"
+                                            title="Reset Password">
+                                        <i class="fas fa-key"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-user-md text-muted mb-3" style="font-size: 3rem;"></i>
+                <h5 class="text-muted">No doctors registered</h5>
+                <p class="text-muted">Doctors will appear here once they register for this clinic.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="text-center mt-4">
+    <a href="{{ url_for('superadmin_clinics') }}" class="btn btn-outline-secondary btn-custom">
+        <i class="fas fa-arrow-left me-2"></i>Back to Clinics
+    </a>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reset Doctor Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="resetPasswordForm" method="POST">
+                <div class="modal-body">
+                    <p>Reset password for <strong id="doctorName"></strong>?</p>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="newPassword" name="new_password" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Reset Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleDoctorStatus(doctorId, isActive) {
+    const action = isActive ? 'deactivate' : 'activate';
+    if (confirm(`Are you sure you want to ${action} this doctor?`)) {
+        fetch(`/superadmin/doctor/${doctorId}/toggle-status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            location.reload();
+        });
+    }
+}
+
+function showResetPasswordModal(doctorId, doctorName) {
+    document.getElementById('doctorName').textContent = doctorName;
+    document.getElementById('resetPasswordForm').action = `/superadmin/doctor/${doctorId}/reset-password`;
+    new bootstrap.Modal(document.getElementById('resetPasswordModal')).show();
+}
+</script>
+{% endblock %}

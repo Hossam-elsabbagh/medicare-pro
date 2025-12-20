@@ -1,0 +1,118 @@
+{% extends "superadmin/base.html" %}
+
+{% block title %}Create Super Admin - Super Admin{% endblock %}
+
+{% block header_title %}Create New Super Admin{% endblock %}
+{% block header_subtitle %}Add a new super administrator to the system{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="stats-card">
+            <div class="text-center mb-4">
+                <div class="stats-icon bg-gradient-warning mx-auto mb-3">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <h4 class="fw-bold">New Super Admin</h4>
+                <p class="text-muted">Create a new super administrator account</p>
+            </div>
+            
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username *</label>
+                    <input type="text" class="form-control" id="username" name="username" required
+                           placeholder="Enter username" minlength="3" maxlength="50">
+                    <div class="form-text">Username must be 3-50 characters long and unique</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email Address *</label>
+                    <input type="email" class="form-control" id="email" name="email" required
+                           placeholder="admin@example.com">
+                    <div class="form-text">Must be a valid and unique email address</div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="password" class="form-label">Password *</label>
+                    <input type="password" class="form-control" id="password" name="password" required
+                           placeholder="Enter secure password" minlength="8">
+                    <div class="form-text">Password must be at least 8 characters long</div>
+                </div>
+                
+                <!-- Security Warning -->
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Security Warning</h6>
+                    <ul class="mb-0 small">
+                        <li>Super Admins have full system access</li>
+                        <li>They can manage all clinics, doctors, and other super admins</li>
+                        <li>Only create accounts for trusted personnel</li>
+                        <li>Ensure strong passwords are used</li>
+                    </ul>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('superadmin_admins') }}" class="btn btn-outline-secondary btn-custom me-md-2">
+                        <i class="fas fa-arrow-left me-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-custom">
+                        <i class="fas fa-user-plus me-2"></i>Create Super Admin
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Password strength indicator
+document.getElementById('password').addEventListener('input', function() {
+    const password = this.value;
+    const strengthDiv = document.getElementById('passwordStrength');
+    
+    if (!strengthDiv) {
+        const div = document.createElement('div');
+        div.id = 'passwordStrength';
+        div.className = 'form-text';
+        this.parentNode.appendChild(div);
+    }
+    
+    let strength = 0;
+    let text = '';
+    let className = '';
+    
+    if (password.length >= 8) strength++;
+    if (password.match(/[a-z]/)) strength++;
+    if (password.match(/[A-Z]/)) strength++;
+    if (password.match(/[0-9]/)) strength++;
+    if (password.match(/[^a-zA-Z0-9]/)) strength++;
+    
+    switch(strength) {
+        case 0:
+        case 1:
+            text = 'Very Weak';
+            className = 'text-danger';
+            break;
+        case 2:
+            text = 'Weak';
+            className = 'text-warning';
+            break;
+        case 3:
+            text = 'Fair';
+            className = 'text-info';
+            break;
+        case 4:
+            text = 'Good';
+            className = 'text-success';
+            break;
+        case 5:
+            text = 'Strong';
+            className = 'text-success fw-bold';
+            break;
+    }
+    
+    document.getElementById('passwordStrength').innerHTML = `Password Strength: <span class="${className}">${text}</span>`;
+});
+</script>
+{% endblock %}

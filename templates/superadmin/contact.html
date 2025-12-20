@@ -1,0 +1,251 @@
+{% extends "superadmin/base.html" %}
+
+{% block title %}Contact Management - Super Admin{% endblock %}
+
+{% block header_title %}Contact Management{% endblock %}
+{% block header_subtitle %}Manage doctor communications and contact settings{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Contact Settings -->
+    <div class="col-md-4 mb-4">
+        <div class="stats-card">
+            <div class="text-center mb-4">
+                <div class="stats-icon bg-gradient-primary mx-auto mb-3">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <h5 class="fw-bold">Contact Settings</h5>
+                <p class="text-muted">Manage admin contact information</p>
+            </div>
+            <div class="d-grid">
+                <a href="{{ url_for('superadmin_contact_settings') }}" class="btn btn-primary btn-custom">
+                    <i class="fas fa-edit me-2"></i>Edit Contact Info
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Conversations -->
+    <div class="col-md-8 mb-4">
+        <div class="stats-card">
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-comments me-2"></i>Active Conversations
+                {% if doctors_with_unread %}
+                <span class="badge bg-danger">{{ doctors_with_unread|length }}</span>
+                {% endif %}
+            </h5>
+            
+            {% if doctors_with_unread %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Doctor</th>
+                            <th>Clinic</th>
+                            <th>Unread Messages</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doctor_id, unread_count in doctors_with_unread.items() %}
+                        {% set doctor = doctors_with_unread.get(doctor_id) or Doctor.query.get(doctor_id) %}
+                        <tr>
+                            <td>
+                                <strong>Dr. {{ Doctor.query.get(doctor_id).first_name }} {{ Doctor.query.get(doctor_id).last_name }}</strong><br>
+                                <small class="text-muted">{{ Doctor.query.get(doctor_id).email }}</small>
+                            </td>
+                            <td>
+                                {% set doc = Doctor.query.get(doctor_id) %}
+                                {% if doc.clinic %}
+                                    {{ doc.clinic.name }}
+                                {% else %}
+                                    <small class="text-muted">Independent</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-danger">{{ unread_count }}</span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('superadmin_doctor_chat', doctor_id=doctor_id) }}" 
+                                   class="btn btn-sm btn-primary">
+                                    <i class="fas fa-comment me-1"></i>Chat
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No active conversations</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Recent Form Messages -->
+<div class="row">
+    <div class="col-12">
+        <div class="stats-card">
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-envelope me-2"></i>Recent Form Messages
+            </h5>
+            
+            {% if form_messages %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Doctor</th>
+                            <th>Subject</th>
+                            <th>Message</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for message in form_messages %}
+                        <tr class="{{ 'table-warning' if not message.is_read else '' }}">
+                            <td>
+                                <strong>Dr. {{ message.doctor.first_name }} {{ message.doctor.last_name }}</strong><br>
+                                <small class="text-muted">{{ message.doctor.email }}</small>
+                            </td>
+                            <td>
+                                <strong>{{ message.subject }}</strong>
+                            </td>
+                            <td>
+                                <div style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
+                                    {{ message.message[:100] }}
+                                    {% if message.message|length > 100 %}...{% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                {% set utc_time = message.created_at | utc_time %}
+                                <small class="text-muted">
+                                    {{ utc_time.strftime('%b %d, %Y %I:%M %p') if utc_time else 'N/A' }}
+                                </small>
+                            </td>
+                            <td>
+                                {% if message.is_read %}
+                                    <span class="badge bg-success">Read</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Unread</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-info" 
+                                            onclick="viewMessage({{ message.id }}, '{{ message.subject }}', `{{ message.message }}`, '{{ message.doctor.first_name }} {{ message.doctor.last_name }}')"
+                                            title="View Message">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <a href="{{ url_for('superadmin_doctor_chat', doctor_id=message.doctor_id) }}" 
+                                       class="btn btn-outline-primary"
+                                       title="Reply via Chat">
+                                        <i class="fas fa-reply"></i>
+                                    </a>
+                                    {% if not message.is_read %}
+                                    <button class="btn btn-outline-success" 
+                                            onclick="markAsRead({{ message.id }})"
+                                            title="Mark as Read">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-envelope-open fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No form messages received</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Message View Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Message Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <strong>From:</strong> <span id="modalDoctorName"></span>
+                </div>
+                <div class="mb-3">
+                    <strong>Subject:</strong> <span id="modalSubject"></span>
+                </div>
+                <div class="mb-3">
+                    <strong>Message:</strong>
+                    <div id="modalMessage" class="mt-2 p-3 bg-light rounded"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="replyButton">Reply via Chat</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentMessageId = null;
+let currentDoctorId = null;
+
+function viewMessage(messageId, subject, message, doctorName) {
+    currentMessageId = messageId;
+    
+    document.getElementById('modalDoctorName').textContent = doctorName;
+    document.getElementById('modalSubject').textContent = subject;
+    document.getElementById('modalMessage').textContent = message;
+    
+    // Find doctor ID from the table (you might want to pass this as parameter)
+    // For now, we'll extract it from the reply button
+    const replyButton = document.getElementById('replyButton');
+    replyButton.onclick = function() {
+        // This would need the doctor ID - you might want to modify the function call
+        window.location.href = `/superadmin/contact/doctor/${currentDoctorId}`;
+    };
+    
+    new bootstrap.Modal(document.getElementById('messageModal')).show();
+    
+    // Mark as read when viewed
+    if (currentMessageId) {
+        markAsRead(currentMessageId);
+    }
+}
+
+function markAsRead(messageId) {
+    fetch(`/superadmin/contact/mark_read/${messageId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Refresh page to update UI
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error marking message as read:', error);
+    });
+}
+</script>
+{% endblock %}

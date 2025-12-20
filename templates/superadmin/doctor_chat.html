@@ -1,0 +1,233 @@
+{% extends "superadmin/base.html" %}
+
+{% block title %}Chat with Dr. {{ doctor.first_name }} {{ doctor.last_name }} - Super Admin{% endblock %}
+
+{% block header_title %}Chat with Dr. {{ doctor.first_name }} {{ doctor.last_name }}{% endblock %}
+{% block header_subtitle %}Real-time communication with doctor{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Doctor Info -->
+    <div class="col-md-3 mb-4">
+        <div class="stats-card">
+            <div class="text-center mb-3">
+                <div class="stats-icon bg-gradient-success mx-auto mb-3">
+                    <i class="fas fa-user-md"></i>
+                </div>
+                <h6 class="fw-bold">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</h6>
+                <p class="text-muted mb-2">{{ doctor.email }}</p>
+                {% if doctor.clinic %}
+                    <small class="badge bg-info">{{ doctor.clinic.name }}</small>
+                {% else %}
+                    <small class="badge bg-secondary">Independent</small>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <small class="text-muted">Status:</small><br>
+                <span class="badge bg-{{ 'success' if doctor.is_active else 'danger' }}">
+                    {{ 'Active' if doctor.is_active else 'Inactive' }}
+                </span>
+            </div>
+            
+            {% if doctor.last_login %}
+            <div class="mb-3">
+                <small class="text-muted">Last Login:</small><br>
+                {% set utc_time = doctor.last_login | utc_time %}
+                <small>{{ utc_time.strftime('%b %d, %Y %I:%M %p') if utc_time else 'Never' }}</small>
+            </div>
+            {% endif %}
+            
+            <div class="d-grid">
+                <a href="{{ url_for('superadmin_contact') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Contacts
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Interface -->
+    <div class="col-md-9">
+        <div class="stats-card">
+            <div class="chat-container" style="height: 500px; display: flex; flex-direction: column;">
+                <div class="chat-header bg-primary text-white p-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-comments me-2"></i>
+                        Chat with Dr. {{ doctor.first_name }} {{ doctor.last_name }}
+                    </h6>
+                </div>
+                
+                <div class="chat-messages flex-grow-1 p-3" id="chatMessages" style="overflow-y: auto; background: #f8f9fa;">
+                    {% for message in chat_messages %}
+                    <div class="chat-message mb-3 d-flex {{ 'justify-content-end' if message.sender_type == 'admin' else 'justify-content-start' }}">
+                        <div class="message-bubble p-3 rounded-3 {{ 'bg-primary text-white' if message.sender_type == 'admin' else 'bg-white border' }}" 
+                             style="max-width: 70%;">
+                            <div class="message-content">{{ message.message }}</div>
+                            <div class="message-meta mt-2" style="font-size: 0.8em; opacity: 0.8;">
+                                <i class="fas fa-{{ 'shield-alt' if message.sender_type == 'admin' else 'user-md' }} me-1"></i>
+                                {{ 'Admin' if message.sender_type == 'admin' else 'Doctor' }}
+                                • {{ message.created_at.strftime('%Y-%m-%d %H:%M') }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="chat-input border-top p-3 bg-white">
+                    <div class="d-flex">
+                        <input type="text" class="form-control me-2" id="messageInput" 
+                               placeholder="Type your message to Dr. {{ doctor.first_name }}..." 
+                               maxlength="500">
+                        <button type="button" class="btn btn-primary" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted">Press Enter to send • Max 500 characters</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.chat-container {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.chat-messages {
+    min-height: 300px;
+}
+
+.message-bubble {
+    word-wrap: break-word;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.message-bubble.bg-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3) !important;
+}
+
+.chat-input {
+    border-top: 1px solid #dee2e6;
+}
+
+.chat-input input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+</style>
+
+<script>
+let doctorId = {{ doctor.id }};
+let lastMessageId = {{ chat_messages[-1].id if chat_messages else 0 }};
+
+function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    // Add message to chat immediately (optimistic update)
+    addMessageToChat(message, 'admin', new Date().toISOString().slice(0, 19).replace('T', ' '));
+    input.value = '';
+    
+    // Send to server
+    fetch(`/superadmin/contact/send_chat/${doctorId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'message=' + encodeURIComponent(message)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            console.error('Failed to send message:', data.error);
+            // You could add error handling here
+        } else {
+            lastMessageId = Math.max(lastMessageId, data.message.id);
+        }
+    })
+    .catch(error => {
+        console.error('Error sending message:', error);
+    });
+}
+
+function addMessageToChat(message, senderType, timestamp) {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    
+    const alignClass = senderType === 'admin' ? 'justify-content-end' : 'justify-content-start';
+    const bubbleClass = senderType === 'admin' ? 'bg-primary text-white' : 'bg-white border';
+    const senderIcon = senderType === 'admin' ? 'shield-alt' : 'user-md';
+    const senderLabel = senderType === 'admin' ? 'Admin' : 'Doctor';
+    
+    messageDiv.className = `chat-message mb-3 d-flex ${alignClass}`;
+    messageDiv.innerHTML = `
+        <div class="message-bubble p-3 rounded-3 ${bubbleClass}" style="max-width: 70%;">
+            <div class="message-content">${message}</div>
+            <div class="message-meta mt-2" style="font-size: 0.8em; opacity: 0.8;">
+                <i class="fas fa-${senderIcon} me-1"></i>
+                ${senderLabel} • ${timestamp}
+            </div>
+        </div>
+    `;
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function checkForNewMessages() {
+    // Since this is admin chat, we need to check for new doctor messages
+    fetch(`/superadmin/contact/get_new_messages/${doctorId}?last_id=${lastMessageId}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.messages && data.messages.length > 0) {
+            data.messages.forEach(msg => {
+                if (msg.sender_type === 'doctor') {
+                    addMessageToChat(msg.message, msg.sender_type, msg.created_at);
+                    lastMessageId = Math.max(lastMessageId, msg.id);
+                }
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error checking for new messages:', error);
+    });
+}
+
+// Check for new messages every 3 seconds
+setInterval(checkForNewMessages, 3000);
+
+// Allow Enter key to send message
+document.getElementById('messageInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        sendMessage();
+    }
+});
+
+// Auto-scroll chat to bottom on load
+document.addEventListener('DOMContentLoaded', function() {
+    const chatMessages = document.getElementById('chatMessages');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+});
+
+// Character counter
+document.getElementById('messageInput').addEventListener('input', function() {
+    const maxLength = 500;
+    const currentLength = this.value.length;
+    const remaining = maxLength - currentLength;
+    
+    // Change border color based on remaining characters
+    if (remaining < 50) {
+        this.style.borderColor = '#dc3545';
+    } else if (remaining < 100) {
+        this.style.borderColor = '#ffc107';
+    } else {
+        this.style.borderColor = '#ced4da';
+    }
+});
+</script>
+{% endblock %}

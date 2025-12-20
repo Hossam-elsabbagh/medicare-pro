@@ -1,0 +1,137 @@
+{% extends "superadmin/base.html" %}
+
+{% block title %}Create Clinic - Super Admin{% endblock %}
+
+{% block header_title %}Create New Clinic{% endblock %}
+{% block header_subtitle %}Add a new clinic to the system{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="stats-card">
+            <div class="text-center mb-4">
+                <div class="stats-icon bg-gradient-primary mx-auto mb-3">
+                    <i class="fas fa-hospital"></i>
+                </div>
+                <h4 class="fw-bold">New Clinic Registration</h4>
+                <p class="text-muted">Fill in the details to create a new clinic account</p>
+            </div>
+            
+            <form method="POST">
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <label for="name" class="form-label">Clinic Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" required
+                               placeholder="Enter clinic name">
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email"
+                               placeholder="clinic@example.com">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="phone" name="phone"
+                               placeholder="+1 (555) 123-4567">
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="address" class="form-label">Address</label>
+                    <textarea class="form-control" id="address" name="address" rows="3"
+                              placeholder="Enter clinic address"></textarea>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="subscription_type" class="form-label">Subscription Plan *</label>
+                        <select class="form-control" id="subscription_type" name="subscription_type" required>
+                            <option value="basic">Basic Plan</option>
+                            <option value="premium">Premium Plan</option>
+                            <option value="enterprise">Enterprise Plan</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="max_doctors" class="form-label">Max Doctors *</label>
+                        <input type="number" class="form-control" id="max_doctors" name="max_doctors" 
+                               value="1" min="1" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="max_patients" class="form-label">Max Patients *</label>
+                        <input type="number" class="form-control" id="max_patients" name="max_patients" 
+                               value="100" min="1" required>
+                    </div>
+                </div>
+                
+                <!-- Subscription Plan Info -->
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle me-2"></i>Subscription Plan Details</h6>
+                    <div class="row text-small">
+                        <div class="col-md-4">
+                            <strong>Basic Plan</strong>
+                            <ul class="mb-0">
+                                <li>1 Doctor</li>
+                                <li>100 Patients</li>
+                                <li>Basic Features</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Premium Plan</strong>
+                            <ul class="mb-0">
+                                <li>5 Doctors</li>
+                                <li>500 Patients</li>
+                                <li>Advanced Features</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Enterprise Plan</strong>
+                            <ul class="mb-0">
+                                <li>Unlimited Doctors</li>
+                                <li>Unlimited Patients</li>
+                                <li>All Features</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('superadmin_clinics') }}" class="btn btn-outline-secondary btn-custom me-md-2">
+                        <i class="fas fa-arrow-left me-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-custom">
+                        <i class="fas fa-save me-2"></i>Create Clinic
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('subscription_type').addEventListener('change', function() {
+    const subscriptionType = this.value;
+    const maxDoctorsInput = document.getElementById('max_doctors');
+    const maxPatientsInput = document.getElementById('max_patients');
+    
+    switch(subscriptionType) {
+        case 'basic':
+            maxDoctorsInput.value = 1;
+            maxPatientsInput.value = 100;
+            break;
+        case 'premium':
+            maxDoctorsInput.value = 5;
+            maxPatientsInput.value = 500;
+            break;
+        case 'enterprise':
+            maxDoctorsInput.value = 999;
+            maxPatientsInput.value = 9999;
+            break;
+    }
+});
+</script>
+{% endblock %}

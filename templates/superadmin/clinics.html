@@ -1,0 +1,203 @@
+{% extends "superadmin/base.html" %}
+
+{% block title %}Clinics - Super Admin{% endblock %}
+
+{% block header_title %}Clinics Management{% endblock %}
+{% block header_subtitle %}Manage all registered clinics and their subscriptions{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="page-title">All Clinics</h2>
+    <a href="{{ url_for('superadmin_create_clinic') }}" class="btn btn-primary btn-custom">
+        <i class="fas fa-plus me-2"></i>Add New Clinic
+    </a>
+</div>
+
+<!-- Search and Filters -->
+<div class="stats-card mb-4">
+    <form method="GET" class="row g-3">
+        <div class="col-md-6">
+            <label for="search" class="form-label">Search Clinics</label>
+            <input type="text" class="form-control" id="search" name="search" 
+                   value="{{ search }}" placeholder="Search by name, email, or phone...">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">&nbsp;</label>
+            <button type="submit" class="btn btn-primary btn-custom d-block">
+                <i class="fas fa-search me-2"></i>Search
+            </button>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">&nbsp;</label>
+            <a href="{{ url_for('superadmin_clinics') }}" class="btn btn-outline-secondary btn-custom d-block">
+                <i class="fas fa-refresh me-2"></i>Clear
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Clinics Table -->
+<div class="table-custom">
+    {% if clinics.items %}
+    <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Clinic Details</th>
+                <th>Contact</th>
+                <th>Subscription</th>
+                <th>Limits</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for clinic in clinics.items %}
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon bg-gradient-primary me-3" style="width: 45px; height: 45px; font-size: 18px;">
+                            <i class="fas fa-hospital"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">{{ clinic.name }}</h6>
+                            <small class="text-muted">ID: {{ clinic.id }}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div>
+                        {% if clinic.email %}
+                        <div><i class="fas fa-envelope text-muted me-1"></i>{{ clinic.email }}</div>
+                        {% endif %}
+                        {% if clinic.phone %}
+                        <div><i class="fas fa-phone text-muted me-1"></i>{{ clinic.phone }}</div>
+                        {% endif %}
+                        {% if not clinic.email and not clinic.phone %}
+                        <small class="text-muted">No contact info</small>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>
+                    <span class="badge badge-custom bg-{{ 'success' if clinic.subscription_type == 'premium' else 'warning' if clinic.subscription_type == 'basic' else 'primary' }}">
+                        {{ clinic.subscription_type.title() }}
+                    </span>
+                    {% if clinic.subscription_end %}
+                    <br><small class="text-muted">Until {{ clinic.subscription_end.strftime('%b %d, %Y') }}</small>
+                    {% endif %}
+                </td>
+                <td>
+                    <small class="text-muted">
+                        <div><i class="fas fa-user-md me-1"></i>{{ clinic.max_doctors }} doctors</div>
+                        <div><i class="fas fa-users me-1"></i>{{ clinic.max_patients }} patients</div>
+                    </small>
+                </td>
+                <td>
+                    <span class="badge badge-custom bg-{{ 'success' if clinic.is_active else 'danger' }}">
+                        {{ 'Active' if clinic.is_active else 'Inactive' }}
+                    </span>
+                </td>
+                <td>
+                    <small class="text-muted">{{ clinic.created_at.strftime('%b %d, %Y') }}</small>
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <a href="{{ url_for('superadmin_clinic_detail', clinic_id=clinic.id) }}" 
+                           class="btn btn-outline-primary" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <button class="btn btn-outline-{{ 'danger' if clinic.is_active else 'success' }}" 
+                                onclick="toggleClinicStatus({{ clinic.id }}, {{ clinic.is_active|lower }})"
+                                title="{{ 'Deactivate' if clinic.is_active else 'Activate' }}">
+                            <i class="fas fa-{{ 'pause' if clinic.is_active else 'play' }}"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- Pagination -->
+    {% if clinics.pages > 1 %}
+    <div class="d-flex justify-content-center p-3">
+        <nav>
+            <ul class="pagination mb-0">
+                {% if clinics.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('superadmin_clinics', page=clinics.prev_num, search=search) }}">Previous</a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in clinics.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != clinics.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('superadmin_clinics', page=page_num, search=search) }}">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if clinics.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('superadmin_clinics', page=clinics.next_num, search=search) }}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-hospital text-muted mb-3" style="font-size: 4rem;"></i>
+        <h4 class="text-muted">{{ 'No clinics found' if search else 'No clinics yet' }}</h4>
+        <p class="text-muted">
+            {{ 'Try adjusting your search criteria.' if search else 'Get started by creating your first clinic.' }}
+        </p>
+        {% if not search %}
+        <a href="{{ url_for('superadmin_create_clinic') }}" class="btn btn-primary btn-custom">
+            <i class="fas fa-plus me-2"></i>Create First Clinic
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleClinicStatus(clinicId, isActive) {
+    const action = isActive ? 'deactivate' : 'activate';
+    if (confirm(`Are you sure you want to ${action} this clinic?`)) {
+        fetch(`/superadmin/clinic/${clinicId}/toggle-status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating the clinic status.');
+        });
+    }
+}
+</script>
+{% endblock %}

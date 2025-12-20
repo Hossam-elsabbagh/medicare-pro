@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Super Admin Panel{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 2px 8px;
+            transition: all 0.3s ease;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+        .main-content {
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        .admin-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-radius: 0 0 20px 20px;
+        }
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        .stats-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            margin-bottom: 15px;
+        }
+        .bg-gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .bg-gradient-success { background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%); }
+        .bg-gradient-warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .bg-gradient-info { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .bg-gradient-danger { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        
+        .page-title {
+            color: #2d3748;
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+        
+        .btn-custom {
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .table-custom {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .table-custom thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .badge-custom {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 px-0 sidebar">
+                <div class="p-3">
+                    <h4 class="text-white text-center mb-4">
+                        <i class="fas fa-crown me-2"></i>
+                        Super Admin
+                    </h4>
+                    <nav class="nav flex-column">
+                        <a class="nav-link {% if request.endpoint == 'superadmin_dashboard' %}active{% endif %}" 
+                           href="{{ url_for('superadmin_dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                        </a>
+                        <a class="nav-link {% if request.endpoint in ['superadmin_clinics', 'superadmin_create_clinic', 'superadmin_clinic_detail'] %}active{% endif %}" 
+                           href="{{ url_for('superadmin_clinics') }}">
+                            <i class="fas fa-hospital me-2"></i>Clinics
+                        </a>
+                        <a class="nav-link {% if request.endpoint == 'superadmin_doctors' %}active{% endif %}" 
+                           href="{{ url_for('superadmin_doctors') }}">
+                            <i class="fas fa-user-md me-2"></i>Doctors
+                        </a>
+                        <a class="nav-link {% if request.endpoint in ['superadmin_admins', 'superadmin_create_admin'] %}active{% endif %}" 
+                           href="{{ url_for('superadmin_admins') }}">
+                            <i class="fas fa-users-cog me-2"></i>Super Admins
+                        </a>
+                        <a class="nav-link {% if request.endpoint == 'superadmin_contact' %}active{% endif %}" 
+                           href="{{ url_for('superadmin_contact') }}">
+                            <i class="fas fa-address-book me-2"></i>Contact Info
+                        </a>
+                        <hr class="text-white">
+                        <a class="nav-link" href="{{ url_for('superadmin_logout') }}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                        </a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <div class="admin-header">
+                    <div class="container-fluid">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h2 class="mb-0">{% block header_title %}Super Admin Panel{% endblock %}</h2>
+                                <p class="mb-0 opacity-75">{% block header_subtitle %}Manage clinics, doctors, and system settings{% endblock %}</p>
+                            </div>
+                            <div>
+                                <span class="badge bg-light text-dark px-3 py-2">
+                                    <i class="fas fa-user me-1"></i>{{ current_user.username }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="container-fluid">
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                      {% if messages %}
+                        {% for category, message in messages %}
+                          <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                          </div>
+                        {% endfor %}
+                      {% endif %}
+                    {% endwith %}
+                    
+                    <!-- Page Content -->
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/7c8e6e4b6a.js" crossorigin="anonymous"></script>
+    
+    <!-- No notification scripts needed for contact information management -->
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

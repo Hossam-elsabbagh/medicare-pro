@@ -1,0 +1,680 @@
+{% extends "superadmin/base.html" %}
+
+{% block title %}Dashboard - Super Admin{% endblock %}
+
+{% block header_title %}Dashboard{% endblock %}
+{% block header_subtitle %}System overview and statistics{% endblock %}
+
+{% block content %}
+<style>
+    /* Enhanced animations and interactions */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes countUp {
+        from { transform: scale(0.5); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    @keyframes shimmer {
+        0% { background-position: -468px 0; }
+        100% { background-position: 468px 0; }
+    }
+    
+    .stats-card {
+        animation: fadeInUp 0.6s ease-out;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stats-card:nth-child(1) { animation-delay: 0.1s; }
+    .stats-card:nth-child(2) { animation-delay: 0.2s; }
+    .stats-card:nth-child(3) { animation-delay: 0.3s; }
+    .stats-card:nth-child(4) { animation-delay: 0.4s; }
+    
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+    
+    .stats-card:hover::before {
+        left: 100%;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    }
+    
+    .stats-icon {
+        animation: pulse 2s infinite;
+        transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover .stats-icon {
+        animation: none;
+        transform: rotate(360deg) scale(1.1);
+    }
+    
+    .counter {
+        animation: countUp 1s ease-out;
+    }
+    
+    .progress-bar {
+        transition: width 2s ease-in-out;
+        animation: shimmer 2s infinite linear;
+        background: linear-gradient(
+            to right,
+            #667eea 0%,
+            #764ba2 50%,
+            #667eea 100%
+        );
+        background-size: 468px 100%;
+    }
+    
+    .interactive-table tbody tr {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .interactive-table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        transform: translateX(5px);
+    }
+    
+    .quick-action-btn {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-action-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255,255,255,0.3);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.3s, height 0.3s;
+    }
+    
+    .quick-action-btn:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .quick-action-btn:hover {
+        transform: translateY(-5px);
+    }
+    
+    .loading-skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+        background-size: 400% 100%;
+        animation: shimmer 1.4s ease-in-out infinite;
+    }
+    
+    .refresh-btn {
+        transition: transform 0.3s ease;
+    }
+    
+    .refresh-btn:hover {
+        transform: rotate(180deg);
+    }
+    
+    .notification-badge {
+        animation: pulse 2s infinite;
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        z-index: 10;
+    }
+</style>
+<!-- Auto-refresh indicator -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="text-muted mb-0">
+        <i class="fas fa-chart-bar me-2"></i>System Statistics
+    </h4>
+    <button class="btn btn-outline-primary btn-sm refresh-btn" onclick="refreshStats()">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+</div>
+
+<div class="row mb-4" id="statsContainer">
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="stats-card" onclick="navigateTo('{{ url_for('superadmin_clinics') }}')">
+            <div class="stats-icon bg-gradient-primary">
+                <i class="fas fa-hospital"></i>
+            </div>
+            <h3 class="fw-bold mb-1 counter" data-target="{{ total_clinics }}">0</h3>
+            <p class="text-muted mb-2">Total Clinics</p>
+            <div class="progress mb-2" style="height: 4px;">
+                <div class="progress-bar" role="progressbar" 
+                     style="width: {{ (active_clinics / total_clinics * 100) if total_clinics > 0 else 0 }}%"></div>
+            </div>
+            <small class="text-success">
+                <i class="fas fa-check-circle me-1"></i>{{ active_clinics }} Active
+            </small>
+            {% if total_clinics > active_clinics %}
+            <div class="notification-badge">
+                <span class="badge bg-warning rounded-pill">{{ total_clinics - active_clinics }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="stats-card" onclick="navigateTo('{{ url_for('superadmin_doctors') }}')">
+            <div class="stats-icon bg-gradient-success">
+                <i class="fas fa-user-md"></i>
+            </div>
+            <h3 class="fw-bold mb-1 counter" data-target="{{ total_doctors }}">0</h3>
+            <p class="text-muted mb-2">Total Doctors</p>
+            <div class="progress mb-2" style="height: 4px;">
+                <div class="progress-bar bg-success" role="progressbar" 
+                     style="width: {{ (active_doctors / total_doctors * 100) if total_doctors > 0 else 0 }}%"></div>
+            </div>
+            <small class="text-success">
+                <i class="fas fa-check-circle me-1"></i>{{ active_doctors }} Active
+            </small>
+            {% if total_doctors > active_doctors %}
+            <div class="notification-badge">
+                <span class="badge bg-danger rounded-pill">{{ total_doctors - active_doctors }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="stats-card" onclick="showPatientDetails()">
+            <div class="stats-icon bg-gradient-info">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3 class="fw-bold mb-1 counter" data-target="{{ total_patients }}">0</h3>
+            <p class="text-muted mb-2">Total Patients</p>
+            <div class="progress mb-2" style="height: 4px;">
+                <div class="progress-bar bg-info" role="progressbar" style="width: 85%"></div>
+            </div>
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>All Clinics
+            </small>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="stats-card" onclick="showAnalytics()">
+            <div class="stats-icon bg-gradient-warning">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h3 class="fw-bold mb-1 counter" data-target="{{ (active_clinics / total_clinics * 100) | round(1) if total_clinics > 0 else 0 }}">0</h3>
+            <p class="text-muted mb-2">Active Rate</p>
+            <div class="progress mb-2" style="height: 4px;">
+                <div class="progress-bar bg-warning" role="progressbar" 
+                     style="width: {{ (active_clinics / total_clinics * 100) if total_clinics > 0 else 0 }}%"></div>
+            </div>
+            <small class="text-info">
+                <i class="fas fa-trending-up me-1"></i>
+                <span id="trend-indicator">
+                    {% set active_rate = (active_clinics / total_clinics * 100) if total_clinics > 0 else 0 %}
+                    {% if active_rate > 75 %}
+                        Excellent
+                    {% elif active_rate > 50 %}
+                        Good
+                    {% else %}
+                        Needs Attention
+                    {% endif %}
+                </span>
+            </small>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0">Recent Clinics</h5>
+                <a href="{{ url_for('superadmin_clinics') }}" class="btn btn-outline-primary btn-sm btn-custom">
+                    View All <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+            
+            {% if recent_clinics %}
+            <div class="table-responsive">
+                <table class="table interactive-table mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th><i class="fas fa-hospital me-1"></i>Clinic Name</th>
+                            <th><i class="fas fa-crown me-1"></i>Subscription</th>
+                            <th><i class="fas fa-toggle-on me-1"></i>Status</th>
+                            <th><i class="fas fa-calendar me-1"></i>Created</th>
+                            <th><i class="fas fa-cog me-1"></i>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for clinic in recent_clinics %}
+                        <tr onclick="window.location.href='{{ url_for('superadmin_clinic_detail', clinic_id=clinic.id) }}'" 
+                            data-clinic-id="{{ clinic.id }}" 
+                            data-bs-toggle="tooltip" 
+                            title="Click to view clinic details">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="position-relative">
+                                        <div class="stats-icon bg-gradient-primary me-3" style="width: 40px; height: 40px; font-size: 16px;">
+                                            <i class="fas fa-hospital"></i>
+                                        </div>
+                                        {% if clinic.is_active %}
+                                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-success border border-light rounded-circle">
+                                            <span class="visually-hidden">Active status</span>
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 clinic-name">{{ clinic.name }}</h6>
+                                        <small class="text-muted">
+                                            <i class="fas fa-envelope me-1"></i>{{ clinic.email or 'No email' }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge badge-custom bg-{{ 'success' if clinic.subscription_type == 'premium' else 'warning' if clinic.subscription_type == 'basic' else 'primary' }} pulse-badge">
+                                    <i class="fas fa-{{ 'crown' if clinic.subscription_type == 'premium' else 'star' if clinic.subscription_type == 'basic' else 'gem' }} me-1"></i>
+                                    {{ clinic.subscription_type.title() }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="dot-indicator {{ 'dot-success' if clinic.is_active else 'dot-danger' }} me-2"></div>
+                                    <span class="badge badge-custom bg-{{ 'success' if clinic.is_active else 'danger' }}">
+                                        {{ 'Active' if clinic.is_active else 'Inactive' }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <small class="text-muted">{{ clinic.created_at.strftime('%b %d, %Y') }}</small>
+                                    <small class="text-muted">
+                                        <span class="time-ago" data-date="{{ clinic.created_at.isoformat() }}"></span>
+                                    </small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-outline-primary btn-sm quick-action-btn" 
+                                            onclick="event.stopPropagation(); viewClinic({{ clinic.id }})"
+                                            data-bs-toggle="tooltip" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success btn-sm quick-action-btn" 
+                                            onclick="event.stopPropagation(); toggleClinicStatus({{ clinic.id }}, {{ clinic.is_active|tojson }})"
+                                            data-bs-toggle="tooltip" title="{{ 'Deactivate' if clinic.is_active else 'Activate' }}">
+                                        <i class="fas fa-{{ 'toggle-off' if clinic.is_active else 'toggle-on' }}"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-hospital text-muted mb-3" style="font-size: 3rem;"></i>
+                <h5 class="text-muted">No clinics found</h5>
+                <p class="text-muted">Create your first clinic to get started.</p>
+                <a href="{{ url_for('superadmin_create_clinic') }}" class="btn btn-primary btn-custom">
+                    <i class="fas fa-plus me-2"></i>Create Clinic
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="stats-card">
+            <h5 class="fw-bold mb-4">Subscription Overview</h5>
+            
+            {% if subscription_stats %}
+            <div class="mb-4">
+                {% for stat in subscription_stats %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon bg-gradient-{{ 'success' if stat.subscription_type == 'premium' else 'warning' if stat.subscription_type == 'basic' else 'primary' }} me-3" 
+                             style="width: 35px; height: 35px; font-size: 14px;">
+                            <i class="fas fa-{{ 'crown' if stat.subscription_type == 'premium' else 'star' if stat.subscription_type == 'basic' else 'gem' }}"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">{{ stat.subscription_type.title() }}</h6>
+                        </div>
+                    </div>
+                    <span class="badge badge-custom bg-light text-dark">{{ stat.count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="d-grid gap-2">
+                <a href="{{ url_for('superadmin_create_clinic') }}" class="btn btn-primary btn-custom">
+                    <i class="fas fa-plus me-2"></i>New Clinic
+                </a>
+                <a href="{{ url_for('superadmin_create_admin') }}" class="btn btn-outline-primary btn-custom">
+                    <i class="fas fa-user-plus me-2"></i>New Admin
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="stats-card">
+            <h5 class="fw-bold mb-3">Quick Actions</h5>
+            <div class="row">
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <a href="{{ url_for('superadmin_clinics') }}" class="btn btn-outline-primary w-100 btn-custom quick-action-btn">
+                        <i class="fas fa-hospital d-block mb-2" style="font-size: 1.5rem;"></i>
+                        <strong>Manage Clinics</strong>
+                        <small class="d-block text-muted">{{ total_clinics }} Total</small>
+                    </a>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <a href="{{ url_for('superadmin_doctors') }}" class="btn btn-outline-success w-100 btn-custom quick-action-btn">
+                        <i class="fas fa-user-md d-block mb-2" style="font-size: 1.5rem;"></i>
+                        <strong>Manage Doctors</strong>
+                        <small class="d-block text-muted">{{ total_doctors }} Total</small>
+                    </a>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <a href="{{ url_for('superadmin_admins') }}" class="btn btn-outline-warning w-100 btn-custom quick-action-btn">
+                        <i class="fas fa-users-cog d-block mb-2" style="font-size: 1.5rem;"></i>
+                        <strong>Super Admins</strong>
+                        <small class="d-block text-muted">Manage Access</small>
+                    </a>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <button class="btn btn-outline-info w-100 btn-custom quick-action-btn" onclick="showCreateClinicModal()">
+                        <i class="fas fa-plus d-block mb-2" style="font-size: 1.5rem;"></i>
+                        <strong>Add Clinic</strong>
+                        <small class="d-block text-muted">Quick Setup</small>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+    .dot-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        animation: pulse 2s infinite;
+    }
+    
+    .dot-success {
+        background-color: #28a745;
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+    }
+    
+    .dot-danger {
+        background-color: #dc3545;
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    }
+    
+    .pulse-badge {
+        animation: badgePulse 3s infinite;
+    }
+    
+    @keyframes badgePulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .clinic-name {
+        transition: color 0.3s ease;
+    }
+    
+    .interactive-table tbody tr:hover .clinic-name {
+        color: #667eea;
+        font-weight: 600;
+    }
+</style>
+
+<script>
+// Counter animation for statistics
+function animateCounters() {
+    const counters = document.querySelectorAll('.counter');
+    
+    counters.forEach(counter => {
+        const target = parseInt(counter.getAttribute('data-target'));
+        const increment = target / 100;
+        let current = 0;
+        
+        const updateCounter = () => {
+            if (current < target) {
+                current += increment;
+                counter.textContent = Math.ceil(current);
+                setTimeout(updateCounter, 20);
+            } else {
+                counter.textContent = target;
+            }
+        };
+        
+        updateCounter();
+    });
+}
+
+// Navigation functions
+function navigateTo(url) {
+    window.location.href = url;
+}
+
+function viewClinic(clinicId) {
+    window.location.href = `/superadmin/clinics/${clinicId}`;
+}
+
+// Toggle clinic status
+function toggleClinicStatus(clinicId, currentStatus) {
+    const action = currentStatus ? 'deactivate' : 'activate';
+    
+    if (confirm(`Are you sure you want to ${action} this clinic?`)) {
+        // Add loading state
+        const btn = event.target.closest('button');
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        btn.disabled = true;
+        
+        // Simulate API call (replace with actual endpoint)
+        setTimeout(() => {
+            // Reset button
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+            
+            // Show success message
+            showToast(`Clinic ${action}d successfully!`, 'success');
+            
+            // Refresh the table row
+            refreshTableRow(clinicId);
+        }, 1500);
+    }
+}
+
+// Show patient details modal
+function showPatientDetails() {
+    showToast('Patient details coming soon!', 'info');
+}
+
+// Show analytics modal
+function showAnalytics() {
+    showToast('Advanced analytics coming soon!', 'info');
+}
+
+// Show create clinic modal
+function showCreateClinicModal() {
+    // Navigate to create clinic page for now
+    window.location.href = '{{ url_for("superadmin_create_clinic") }}';
+}
+
+// Refresh statistics
+function refreshStats() {
+    const refreshBtn = document.querySelector('.refresh-btn i');
+    refreshBtn.classList.add('fa-spin');
+    
+    // Simulate API call
+    setTimeout(() => {
+        refreshBtn.classList.remove('fa-spin');
+        showToast('Statistics refreshed!', 'success');
+        
+        // Re-animate counters
+        document.querySelectorAll('.counter').forEach(counter => {
+            counter.textContent = '0';
+        });
+        animateCounters();
+    }, 2000);
+}
+
+// Show toast notification
+function showToast(message, type = 'info') {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 3000);
+}
+
+// Refresh table row
+function refreshTableRow(clinicId) {
+    const row = document.querySelector(`tr[data-clinic-id="${clinicId}"]`);
+    if (row) {
+        row.style.background = 'rgba(40, 167, 69, 0.1)';
+        setTimeout(() => {
+            row.style.background = '';
+        }, 2000);
+    }
+}
+
+// Time ago functionality
+function updateTimeAgo() {
+    document.querySelectorAll('.time-ago').forEach(element => {
+        const date = new Date(element.getAttribute('data-date'));
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+            element.textContent = 'Yesterday';
+        } else if (diffDays < 7) {
+            element.textContent = `${diffDays} days ago`;
+        } else if (diffDays < 30) {
+            const weeks = Math.floor(diffDays / 7);
+            element.textContent = `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+        } else {
+            const months = Math.floor(diffDays / 30);
+            element.textContent = `${months} month${months > 1 ? 's' : ''} ago`;
+        }
+    });
+}
+
+// Initialize everything when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltupTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltupTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Start counter animations
+    setTimeout(animateCounters, 500);
+    
+    // Update time ago
+    updateTimeAgo();
+    
+    // Update time ago every minute
+    setInterval(updateTimeAgo, 60000);
+    
+    // Add ripple effect to clickable cards
+    document.querySelectorAll('.stats-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            const ripple = document.createElement('div');
+            ripple.style.cssText = `
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.5);
+                transform: scale(0);
+                animation: ripple-effect 0.6s linear;
+                pointer-events: none;
+            `;
+            
+            const rect = this.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+            ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+            
+            this.appendChild(ripple);
+            
+            setTimeout(() => {
+                ripple.remove();
+            }, 600);
+        });
+    });
+    
+    // Auto-refresh stats every 5 minutes
+    setInterval(() => {
+        refreshStats();
+    }, 300000);
+});
+
+// Add ripple animation CSS
+const rippleStyle = document.createElement('style');
+rippleStyle.textContent = `
+    @keyframes ripple-effect {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(rippleStyle);
+</script>
+{% endblock %}

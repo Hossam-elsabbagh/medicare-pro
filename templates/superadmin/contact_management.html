@@ -1,0 +1,336 @@
+{% extends "superadmin/base.html" %}
+
+{% block title %}Contact Information Management - Super Admin{% endblock %}
+
+{% block header_title %}Contact Information Management{% endblock %}
+{% block header_subtitle %}Manage contact information displayed to doctors{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Current Contact Information Display -->
+    <div class="col-lg-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center mb-4">
+                <div class="stats-icon bg-gradient-info me-3">
+                    <i class="fas fa-info-circle fa-2x"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0">Current Contact Information</h5>
+                    <p class="text-muted mb-0">Information displayed to doctors</p>
+                </div>
+            </div>
+            
+            {% if contact_info %}
+                <div class="contact-preview">
+                    {% if contact_info.email %}
+                    <div class="contact-preview-item mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="preview-icon bg-primary me-3">
+                                <i class="fas fa-envelope text-white"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1 fw-semibold">Email Address</h6>
+                                <p class="mb-0 text-muted">{{ contact_info.email }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if contact_info.phone %}
+                    <div class="contact-preview-item mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="preview-icon bg-success me-3">
+                                <i class="fas fa-phone text-white"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1 fw-semibold">Phone Number</h6>
+                                <p class="mb-0 text-muted">{{ contact_info.phone }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if contact_info.address %}
+                    <div class="contact-preview-item mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="preview-icon bg-danger me-3">
+                                <i class="fas fa-map-marker-alt text-white"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1 fw-semibold">Office Address</h6>
+                                <p class="mb-0 text-muted">{{ contact_info.address }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if contact_info.office_hours %}
+                    <div class="contact-preview-item mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="preview-icon bg-warning me-3">
+                                <i class="fas fa-clock text-white"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1 fw-semibold">Office Hours</h6>
+                                <p class="mb-0 text-muted">{{ contact_info.office_hours }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mt-4 pt-3 border-top">
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>
+                            Last updated: 
+                            {% if contact_info.updated_at %}
+                                {{ contact_info.updated_at.strftime('%B %d, %Y at %I:%M %p') }}
+                            {% else %}
+                                {{ contact_info.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-exclamation-triangle text-warning display-4 mb-3"></i>
+                    <h6 class="text-muted">No Contact Information Set</h6>
+                    <p class="text-muted small mb-0">Doctors cannot see any contact details</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Contact Information Form -->
+    <div class="col-lg-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center mb-4">
+                <div class="stats-icon bg-gradient-success me-3">
+                    <i class="fas fa-edit fa-2x"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0">{{ 'Update' if contact_info else 'Add' }} Contact Information</h5>
+                    <p class="text-muted mb-0">Edit the information shown to doctors</p>
+                </div>
+            </div>
+            
+            <form action="{{ url_for('superadmin_contact') }}" method="POST">
+                <div class="mb-3">
+                    <label for="email" class="form-label fw-semibold">
+                        <i class="fas fa-envelope text-primary me-2"></i>Email Address
+                    </label>
+                    <input type="email" class="form-control form-control-lg" id="email" name="email" 
+                           value="{{ contact_info.email if contact_info else '' }}"
+                           placeholder="admin@clinic.com">
+                    <div class="form-text">Primary email for doctor communications</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="phone" class="form-label fw-semibold">
+                        <i class="fas fa-phone text-success me-2"></i>Phone Number
+                    </label>
+                    <input type="tel" class="form-control form-control-lg" id="phone" name="phone" 
+                           value="{{ contact_info.phone if contact_info else '' }}"
+                           placeholder="+20 xxx xxx xxxx">
+                    <div class="form-text">Contact phone number for urgent matters</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="address" class="form-label fw-semibold">
+                        <i class="fas fa-map-marker-alt text-danger me-2"></i>Office Address
+                    </label>
+                    <textarea class="form-control form-control-lg" id="address" name="address" rows="3" 
+                              placeholder="123 Medical Street, Cairo, Egypt">{{ contact_info.address if contact_info else '' }}</textarea>
+                    <div class="form-text">Physical office location</div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="office_hours" class="form-label fw-semibold">
+                        <i class="fas fa-clock text-warning me-2"></i>Office Hours
+                    </label>
+                    <input type="text" class="form-control form-control-lg" id="office_hours" name="office_hours" 
+                           value="{{ contact_info.office_hours if contact_info else '' }}"
+                           placeholder="Monday - Friday: 9:00 AM - 5:00 PM">
+                    <div class="form-text">When doctors can expect responses</div>
+                </div>
+                
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fas fa-save me-2"></i>
+                        {{ 'Update' if contact_info else 'Save' }} Contact Information
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics and Quick Actions -->
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-gradient-primary me-3">
+                        <i class="fas fa-chart-bar fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Contact System Overview</h5>
+                        <p class="text-muted mb-0">System statistics and information</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('contact') }}" class="btn btn-outline-primary" target="_blank">
+                        <i class="fas fa-eye me-2"></i>Preview
+                    </a>
+                    <button class="btn btn-outline-info" onclick="refreshPreview()">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+            
+            <div class="row text-center">
+                <div class="col-md-3 mb-3">
+                    <div class="p-3 bg-light rounded-3">
+                        <h4 class="text-primary fw-bold mb-1">{{ stats.total_doctors if stats else 0 }}</h4>
+                        <small class="text-muted">Total Doctors</small>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="p-3 bg-light rounded-3">
+                        <h4 class="text-success fw-bold mb-1">{{ '✓' if contact_info else '✗' }}</h4>
+                        <small class="text-muted">Contact Info {{ 'Set' if contact_info else 'Missing' }}</small>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="p-3 bg-light rounded-3">
+                        <h4 class="text-info fw-bold mb-1">{{ contact_info.email|length if contact_info and contact_info.email else 0 }}</h4>
+                        <small class="text-muted">Email Length</small>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="p-3 bg-light rounded-3">
+                        <h4 class="text-warning fw-bold mb-1">{{ contact_info.phone|length if contact_info and contact_info.phone else 0 }}</h4>
+                        <small class="text-muted">Phone Length</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<style>
+.preview-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.contact-preview-item {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.contact-preview-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.form-control-lg {
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.form-control-lg:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    transform: scale(1.02);
+}
+
+.btn-lg {
+    border-radius: 10px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-lg:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.stats-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+}
+</style>
+
+<script>
+function refreshPreview() {
+    location.reload();
+}
+
+// Auto-save functionality (optional)
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const inputs = form.querySelectorAll('input, textarea');
+    
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            // Optional: Add auto-save functionality here
+            console.log('Field updated:', this.name, this.value);
+        });
+    });
+});
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const email = document.getElementById('email').value;
+    const phone = document.getElementById('phone').value;
+    const address = document.getElementById('address').value;
+    const hours = document.getElementById('office_hours').value;
+    
+    if (!email && !phone && !address && !hours) {
+        e.preventDefault();
+        alert('Please fill in at least one contact field.');
+        return false;
+    }
+    
+    // Email validation
+    if (email && !email.includes('@')) {
+        e.preventDefault();
+        alert('Please enter a valid email address.');
+        document.getElementById('email').focus();
+        return false;
+    }
+});
+</script>
+{% endblock %}

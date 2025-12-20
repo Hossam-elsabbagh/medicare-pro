@@ -1,0 +1,138 @@
+{% extends "superadmin/base.html" %}
+
+{% block title %}Create Doctor - Super Admin{% endblock %}
+
+{% block header_title %}Create New Doctor{% endblock %}
+{% block header_subtitle %}Add a new doctor to the system{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="stats-card">
+            <div class="text-center mb-4">
+                <div class="stats-icon bg-gradient-success mx-auto mb-3">
+                    <i class="fas fa-user-md"></i>
+                </div>
+                <h4 class="fw-bold">New Doctor Registration</h4>
+                <p class="text-muted">Fill in the details to create a new doctor account</p>
+            </div>
+            
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="first_name" class="form-label">First Name *</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" required
+                               placeholder="Enter first name">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="last_name" class="form-label">Last Name *</label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" required
+                               placeholder="Enter last name">
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label">Email Address *</label>
+                        <input type="email" class="form-control" id="email" name="email" required
+                               placeholder="doctor@example.com">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="phone" class="form-label">Phone Number *</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" required
+                               placeholder="+1 (555) 123-4567">
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="clinic_id" class="form-label">Assign to Clinic</label>
+                        <select class="form-control" id="clinic_id" name="clinic_id">
+                            <option value="">No Clinic (Independent)</option>
+                            {% for clinic in clinics %}
+                            <option value="{{ clinic.id }}">{{ clinic.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Optional - doctor can work independently</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="role" class="form-label">Role *</label>
+                        <select class="form-control" id="role" name="role" required>
+                            <option value="doctor">Doctor</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password *</label>
+                    <input type="password" class="form-control" id="password" name="password" required
+                           placeholder="Enter password" minlength="8">
+                    <small class="form-text text-muted">Password must be at least 8 characters long</small>
+                </div>
+                
+                <!-- Doctor Role Info -->
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle me-2"></i>Role Information</h6>
+                    <div class="row text-small">
+                        <div class="col-md-6">
+                            <strong>Doctor Role</strong>
+                            <ul class="mb-0">
+                                <li>Manage patients</li>
+                                <li>Create visits</li>
+                                <li>Access reports</li>
+                                <li>Basic permissions</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Admin Role</strong>
+                            <ul class="mb-0">
+                                <li>All doctor permissions</li>
+                                <li>Manage clinic settings</li>
+                                <li>Advanced features</li>
+                                <li>Elevated permissions</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('superadmin_doctors') }}" class="btn btn-outline-secondary btn-custom me-md-2">
+                        <i class="fas fa-arrow-left me-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-success btn-custom">
+                        <i class="fas fa-save me-2"></i>Create Doctor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Add password confirmation
+document.getElementById('password').addEventListener('input', function() {
+    const password = this.value;
+    const feedback = document.createElement('div');
+    feedback.className = 'form-text';
+    
+    if (password.length < 8) {
+        feedback.textContent = 'Password must be at least 8 characters long';
+        feedback.style.color = 'red';
+    } else {
+        feedback.textContent = 'Password strength: Good';
+        feedback.style.color = 'green';
+    }
+    
+    // Remove existing feedback
+    const existingFeedback = this.parentNode.querySelector('.form-text:not(.text-muted)');
+    if (existingFeedback) {
+        existingFeedback.remove();
+    }
+    
+    this.parentNode.appendChild(feedback);
+});
+</script>
+{% endblock %}

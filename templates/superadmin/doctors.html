@@ -1,0 +1,281 @@
+{% extends "superadmin/base.html" %}
+
+{% block title %}Doctors - Super Admin{% endblock %}
+
+{% block header_title %}Doctors Management{% endblock %}
+{% block header_subtitle %}Manage all registered doctors across all clinics{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="page-title">All Doctors</h2>
+    <a href="{{ url_for('superadmin_create_doctor') }}" class="btn btn-success btn-custom">
+        <i class="fas fa-plus me-2"></i>Create Doctor
+    </a>
+</div>
+
+<!-- Search and Filters -->
+<div class="stats-card mb-4">
+    <form method="GET" class="row g-3">
+        <div class="col-md-6">
+            <label for="search" class="form-label">Search Doctors</label>
+            <input type="text" class="form-control" id="search" name="search" 
+                   value="{{ search }}" placeholder="Search by name, email, or phone...">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">&nbsp;</label>
+            <button type="submit" class="btn btn-primary btn-custom d-block">
+                <i class="fas fa-search me-2"></i>Search
+            </button>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">&nbsp;</label>
+            <a href="{{ url_for('superadmin_doctors') }}" class="btn btn-outline-secondary btn-custom d-block">
+                <i class="fas fa-refresh me-2"></i>Clear
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Doctors Table -->
+<div class="table-custom">
+    {% if doctors.items %}
+    <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Doctor Details</th>
+                <th>Clinic</th>
+                <th>Contact</th>
+                <th>Status</th>
+                <th>Verification</th>
+                <th>Last Login</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for doctor in doctors.items %}
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon bg-gradient-success me-3" style="width: 45px; height: 45px; font-size: 18px;">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</h6>
+                            <small class="text-muted">ID: {{ doctor.id }}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    {% if doctor.clinic %}
+                    <div>
+                        <h6 class="mb-0">{{ doctor.clinic.name }}</h6>
+                        <small class="text-muted">{{ doctor.clinic.subscription_type.title() }} Plan</small>
+                    </div>
+                    {% else %}
+                    <small class="text-muted">No clinic assigned</small>
+                    {% endif %}
+                </td>
+                <td>
+                    <div>
+                        <div><i class="fas fa-envelope text-muted me-1"></i>{{ doctor.email }}</div>
+                        <div><i class="fas fa-phone text-muted me-1"></i>{{ doctor.phone }}</div>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge badge-custom bg-{{ 'success' if doctor.is_active else 'danger' }}">
+                        {{ 'Active' if doctor.is_active else 'Inactive' }}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge badge-custom bg-{{ 'success' if doctor.verified else 'warning' }}">
+                        {{ 'Verified' if doctor.verified else 'Unverified' }}
+                    </span>
+                </td>
+                <td>
+                    {% if doctor.last_login %}
+                    {% set utc_time = doctor.last_login | utc_time %}
+                    <small class="text-muted">{{ utc_time.strftime('%b %d, %Y %I:%M %p') if utc_time else 'Never' }}</small>
+                    <br><small class="text-muted" style="font-size: 0.8em;">UTC</small>
+                    {% else %}
+                    <small class="text-muted">Never</small>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-{{ 'danger' if doctor.is_active else 'success' }}" 
+                                onclick="toggleDoctorStatus({{ doctor.id }}, {{ doctor.is_active|lower }})"
+                                title="{{ 'Deactivate' if doctor.is_active else 'Activate' }}">
+                            <i class="fas fa-{{ 'pause' if doctor.is_active else 'play' }}"></i>
+                        </button>
+                        <button class="btn btn-outline-warning" 
+                                onclick="showResetPasswordModal({{ doctor.id }}, '{{ doctor.first_name }} {{ doctor.last_name }}')"
+                                title="Reset Password">
+                            <i class="fas fa-key"></i>
+                        </button>
+                        <button class="btn btn-outline-info" 
+                                onclick="showAssignClinicModal({{ doctor.id }}, '{{ doctor.first_name }} {{ doctor.last_name }}', {{ doctor.clinic_id or 'null' }})"
+                                title="Assign Clinic">
+                            <i class="fas fa-hospital"></i>
+                        </button>
+                        <a href="{{ url_for('superadmin_edit_doctor', doctor_id=doctor.id) }}" 
+                           class="btn btn-outline-primary btn-sm"
+                           title="Edit Doctor">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- Pagination -->
+    {% if doctors.pages > 1 %}
+    <div class="d-flex justify-content-center p-3">
+        <nav>
+            <ul class="pagination mb-0">
+                {% if doctors.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('superadmin_doctors', page=doctors.prev_num, search=search) }}">Previous</a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in doctors.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != doctors.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('superadmin_doctors', page=page_num, search=search) }}">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if doctors.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('superadmin_doctors', page=doctors.next_num, search=search) }}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-user-md text-muted mb-3" style="font-size: 4rem;"></i>
+        <h4 class="text-muted">{{ 'No doctors found' if search else 'No doctors yet' }}</h4>
+        <p class="text-muted">
+            {{ 'Try adjusting your search criteria.' if search else 'Doctors will appear here once they register.' }}
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reset Doctor Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="resetPasswordForm" method="POST">
+                <div class="modal-body">
+                    <p>Reset password for <strong id="doctorName"></strong>?</p>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="newPassword" name="new_password" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Reset Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Clinic Modal -->
+<div class="modal fade" id="assignClinicModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Assign Doctor to Clinic</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="assignClinicForm" method="POST">
+                <div class="modal-body">
+                    <p>Assign <strong id="assignDoctorName"></strong> to a clinic:</p>
+                    <div class="mb-3">
+                        <label for="clinicSelect" class="form-label">Select Clinic</label>
+                        <select class="form-control" id="clinicSelect" name="clinic_id">
+                            <option value="">Independent (No Clinic)</option>
+                            {% for clinic in clinics %}
+                            <option value="{{ clinic.id }}">{{ clinic.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info">Assign Clinic</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleDoctorStatus(doctorId, isActive) {
+    const action = isActive ? 'deactivate' : 'activate';
+    if (confirm(`Are you sure you want to ${action} this doctor?`)) {
+        fetch(`/superadmin/doctor/${doctorId}/toggle-status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            location.reload(); // Reload on error to show flash messages
+        });
+    }
+}
+
+function showResetPasswordModal(doctorId, doctorName) {
+    document.getElementById('doctorName').textContent = doctorName;
+    document.getElementById('resetPasswordForm').action = `/superadmin/doctor/${doctorId}/reset-password`;
+    new bootstrap.Modal(document.getElementById('resetPasswordModal')).show();
+}
+
+function showAssignClinicModal(doctorId, doctorName, currentClinicId) {
+    document.getElementById('assignDoctorName').textContent = doctorName;
+    document.getElementById('assignClinicForm').action = `/superadmin/doctor/${doctorId}/assign-clinic`;
+    
+    // Set current clinic selection
+    const clinicSelect = document.getElementById('clinicSelect');
+    clinicSelect.value = currentClinicId || '';
+    
+    new bootstrap.Modal(document.getElementById('assignClinicModal')).show();
+}
+</script>
+{% endblock %}

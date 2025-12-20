@@ -1,0 +1,153 @@
+{% extends "superadmin/base.html" %}
+
+{% block title %}Edit Doctor - Super Admin{% endblock %}
+
+{% block header_title %}Edit Doctor{% endblock %}
+{% block header_subtitle %}Update doctor information{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="stats-card">
+            <div class="text-center mb-4">
+                <div class="stats-icon bg-gradient-warning mx-auto mb-3">
+                    <i class="fas fa-user-edit"></i>
+                </div>
+                <h4 class="fw-bold">Edit Doctor Account</h4>
+                <p class="text-muted">Update the doctor's information</p>
+            </div>
+            
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="first_name" class="form-label">First Name *</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" required
+                               value="{{ doctor.first_name }}" placeholder="Enter first name">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="last_name" class="form-label">Last Name *</label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" required
+                               value="{{ doctor.last_name }}" placeholder="Enter last name">
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label">Email Address *</label>
+                        <input type="email" class="form-control" id="email" name="email" required
+                               value="{{ doctor.email }}" placeholder="doctor@example.com">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="phone" class="form-label">Phone Number *</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" required
+                               value="{{ doctor.phone }}" placeholder="+1 (555) 123-4567">
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="clinic_id" class="form-label">Assign to Clinic</label>
+                        <select class="form-control" id="clinic_id" name="clinic_id">
+                            <option value="">No Clinic (Independent)</option>
+                            {% for clinic in clinics %}
+                            <option value="{{ clinic.id }}" {{ 'selected' if doctor.clinic_id == clinic.id else '' }}>
+                                {{ clinic.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Optional - doctor can work independently</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="role" class="form-label">Role *</label>
+                        <select class="form-control" id="role" name="role" required>
+                            <option value="doctor" {{ 'selected' if doctor.role == 'doctor' else '' }}>Doctor</option>
+                            <option value="admin" {{ 'selected' if doctor.role == 'admin' else '' }}>Admin</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label">New Password</label>
+                    <input type="password" class="form-control" id="password" name="password"
+                           placeholder="Leave blank to keep current password" minlength="8">
+                    <small class="form-text text-muted">Leave blank to keep current password. If changed, must be at least 8 characters long</small>
+                </div>
+                
+                <!-- Account Status Info -->
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle me-2"></i>Account Information</h6>
+                    <div class="row text-small">
+                        <div class="col-md-6">
+                            <strong>Status:</strong> 
+                            <span class="badge bg-{{ 'success' if doctor.is_active else 'danger' }}">
+                                {{ 'Active' if doctor.is_active else 'Inactive' }}
+                            </span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Verified:</strong> 
+                            <span class="badge bg-{{ 'success' if doctor.verified else 'warning' }}">
+                                {{ 'Verified' if doctor.verified else 'Unverified' }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row text-small mt-2">
+                        <div class="col-md-6">
+                            <strong>Created:</strong> {{ doctor.created_at.strftime('%Y-%m-%d') if doctor.created_at else 'N/A' }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Last Login:</strong> 
+                            {% if doctor.last_login %}
+                                {% set utc_time = doctor.last_login | utc_time %}
+                                {{ utc_time.strftime('%Y-%m-%d %I:%M %p') if utc_time else 'Never' }} (UTC)
+                            {% else %}
+                                Never
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('superadmin_doctors') }}" class="btn btn-outline-secondary btn-custom me-md-2">
+                        <i class="fas fa-arrow-left me-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-warning btn-custom">
+                        <i class="fas fa-save me-2"></i>Update Doctor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Add password validation
+document.getElementById('password').addEventListener('input', function() {
+    const password = this.value;
+    const feedback = document.createElement('div');
+    feedback.className = 'form-text';
+    
+    if (password.length > 0 && password.length < 8) {
+        feedback.textContent = 'Password must be at least 8 characters long';
+        feedback.style.color = 'red';
+    } else if (password.length >= 8) {
+        feedback.textContent = 'Password strength: Good';
+        feedback.style.color = 'green';
+    } else {
+        feedback.textContent = 'Leave blank to keep current password';
+        feedback.style.color = 'gray';
+    }
+    
+    // Remove existing feedback
+    const existingFeedback = this.parentNode.querySelector('.form-text:not(.text-muted)');
+    if (existingFeedback) {
+        existingFeedback.remove();
+    }
+    
+    if (password.length > 0) {
+        this.parentNode.appendChild(feedback);
+    }
+});
+</script>
+{% endblock %}

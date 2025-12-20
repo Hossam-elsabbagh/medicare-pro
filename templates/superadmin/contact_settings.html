@@ -1,0 +1,312 @@
+{% extends "superadmin/base.html" %}
+
+{% block title %}Contact Settings - Super Admin{% endblock %}
+
+{% block header_title %}Contact Settings{% endblock %}
+{% block header_subtitle %}Manage admin contact information{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Current Contact Info -->
+    <div class="col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center mb-3">
+                <div class="stats-icon bg-gradient-info">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <div class="ms-3">
+                    <h5 class="fw-bold mb-0">Current Contact Information</h5>
+                    <p class="text-muted mb-0 small">Information shown to doctors</p>
+                </div>
+            </div>
+            
+            {% if contact_info %}
+                <div class="contact-info-display">
+                    {% if contact_info.email %}
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Email Address</label>
+                        <div class="fw-medium">
+                            <i class="fas fa-envelope text-primary me-2"></i>
+                            {{ contact_info.email }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if contact_info.phone %}
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Phone Number</label>
+                        <div class="fw-medium">
+                            <i class="fas fa-phone text-success me-2"></i>
+                            {{ contact_info.phone }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if contact_info.address %}
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Office Address</label>
+                        <div class="fw-medium">
+                            <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                            {{ contact_info.address }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if contact_info.office_hours %}
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Office Hours</label>
+                        <div class="fw-medium">
+                            <i class="fas fa-clock text-warning me-2"></i>
+                            {{ contact_info.office_hours }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-0">
+                        <label class="form-label text-muted small">Last Updated</label>
+                        <div class="fw-medium">
+                            <i class="fas fa-calendar text-info me-2"></i>
+                            {% if contact_info.updated_at %}
+                                {{ contact_info.updated_at.strftime('%B %d, %Y at %I:%M %p') }}
+                            {% else %}
+                                {{ contact_info.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-exclamation-triangle text-warning display-6 mb-3"></i>
+                    <h6 class="text-muted">No contact information set</h6>
+                    <p class="small text-muted">Doctors won't see any contact details</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Update Contact Info Form -->
+    <div class="col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center mb-3">
+                <div class="stats-icon bg-gradient-success">
+                    <i class="fas fa-edit"></i>
+                </div>
+                <div class="ms-3">
+                    <h5 class="fw-bold mb-0">Update Contact Information</h5>
+                    <p class="text-muted mb-0 small">Edit the information shown to doctors</p>
+                </div>
+            </div>
+            
+            <form action="{{ url_for('superadmin_contact_settings') }}" method="POST">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{{ contact_info.email if contact_info else '' }}"
+                               placeholder="admin@clinic.com">
+                    </div>
+                    <div class="form-text">Primary email for doctor communications</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="phone" class="form-label">Phone Number</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                        <input type="tel" class="form-control" id="phone" name="phone" 
+                               value="{{ contact_info.phone if contact_info else '' }}"
+                               placeholder="+20 xxx xxx xxxx">
+                    </div>
+                    <div class="form-text">Contact phone number for urgent matters</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="address" class="form-label">Office Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                        <textarea class="form-control" id="address" name="address" rows="3" 
+                                  placeholder="123 Medical Street, Cairo, Egypt">{{ contact_info.address if contact_info else '' }}</textarea>
+                    </div>
+                    <div class="form-text">Physical office location</div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="office_hours" class="form-label">Office Hours</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                        <input type="text" class="form-control" id="office_hours" name="office_hours" 
+                               value="{{ contact_info.office_hours if contact_info else '' }}"
+                               placeholder="Monday - Friday: 9:00 AM - 5:00 PM">
+                    </div>
+                    <div class="form-text">When doctors can expect responses</div>
+                </div>
+                
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-2"></i>
+                        {{ 'Update' if contact_info else 'Save' }} Contact Information
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Row -->
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center mb-4">
+                <div class="stats-icon bg-gradient-primary">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="ms-3">
+                    <h5 class="fw-bold mb-0">Contact System Statistics</h5>
+                    <p class="text-muted mb-0 small">Overview of communication activity</p>
+                </div>
+            </div>
+            
+            <div class="row text-center">
+                <div class="col-6 col-md-3 mb-3">
+                    <div class="p-3 bg-light rounded">
+                        <h4 class="text-primary fw-bold mb-1">{{ stats.total_messages }}</h4>
+                        <small class="text-muted">Total Messages</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <div class="p-3 bg-light rounded">
+                        <h4 class="text-success fw-bold mb-1">{{ stats.form_messages }}</h4>
+                        <small class="text-muted">Form Messages</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <div class="p-3 bg-light rounded">
+                        <h4 class="text-info fw-bold mb-1">{{ stats.chat_messages }}</h4>
+                        <small class="text-muted">Chat Messages</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <div class="p-3 bg-light rounded">
+                        <h4 class="text-warning fw-bold mb-1">{{ stats.unread_messages }}</h4>
+                        <small class="text-muted">Unread Messages</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="stats-card">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-gradient-secondary">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h5 class="fw-bold mb-0">Recent Contact Activity</h5>
+                        <p class="text-muted mb-0 small">Latest communications from doctors</p>
+                    </div>
+                </div>
+                <a href="{{ url_for('superadmin_contact') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-eye me-1"></i>View All
+                </a>
+            </div>
+            
+            {% if recent_messages %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Doctor</th>
+                                <th>Type</th>
+                                <th>Subject/Message</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for message in recent_messages %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                            <small class="text-white fw-bold">
+                                                {{ message.doctor.first_name[0] }}{{ message.doctor.last_name[0] }}
+                                            </small>
+                                        </div>
+                                        <div>
+                                            <div class="fw-medium">Dr. {{ message.doctor.first_name }} {{ message.doctor.last_name }}</div>
+                                            <small class="text-muted">{{ message.doctor.email }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'info' if message.message_type == 'form' else 'success' }}">
+                                        <i class="fas fa-{{ 'envelope' if message.message_type == 'form' else 'comments' }} me-1"></i>
+                                        {{ message.message_type.title() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if message.message_type == 'form' %}
+                                        <div class="fw-medium">{{ message.subject or 'General Inquiry' }}</div>
+                                        <small class="text-muted">{{ message.message[:50] }}...</small>
+                                    {% else %}
+                                        <div class="text-muted">{{ message.message[:60] }}...</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ message.created_at.strftime('%b %d, %Y') }}<br>
+                                        {{ message.created_at.strftime('%I:%M %p') }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'warning' if not message.is_read else 'success' }}">
+                                        {{ 'Unread' if not message.is_read else 'Read' }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-inbox text-muted display-6 mb-3"></i>
+                    <h6 class="text-muted">No recent activity</h6>
+                    <p class="small text-muted">Contact messages will appear here</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.contact-info-display .mb-3:last-child {
+    margin-bottom: 0 !important;
+}
+
+.avatar-sm {
+    width: 35px;
+    height: 35px;
+    font-size: 0.8rem;
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,123,255,.05);
+}
+</style>
+{% endblock %}
