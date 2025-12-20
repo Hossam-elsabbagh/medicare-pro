@@ -3,6 +3,16 @@ from wtforms import StringField, PasswordField, SubmitField, BooleanField, Integ
 from wtforms.validators import DataRequired, Email, Optional, Length, EqualTo, InputRequired, NumberRange
 from flask_wtf.file import FileAllowed
 
+# class SignupForm(FlaskForm):
+#     first_name = StringField('First Name', validators=[DataRequired()])
+#     last_name = StringField('Last Name', validators=[DataRequired()])
+#     email = StringField('Email', validators=[DataRequired(), Email()])
+#     phone = StringField('Phone', validators=[DataRequired()])
+#     password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
+#     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+#     submit = SubmitField('Sign Up')
+
+
 class SignupForm(FlaskForm):
     first_name = StringField('First Name', validators=[DataRequired()])
     last_name = StringField('Last Name', validators=[DataRequired()])
@@ -27,6 +37,31 @@ class PatientForm(FlaskForm):
     diagnosis = TextAreaField('Initial Diagnosis', validators=[Optional()])
     submit = SubmitField('Add Patient')
 
+
+    # name = StringField('Name', validators=[DataRequired()])
+    # phone = StringField('Phone', validators=[DataRequired()])
+    # age = IntegerField('Age', validators=[DataRequired()])
+    # diagnosis = StringField('Diagnosis', validators=[DataRequired()])
+    # medicines = StringField('Medicines')
+    # first_visit = DateField('First Visit', validators=[DataRequired()])
+    # next_visit = DateField('Next Visit')
+    # amount_due = FloatField('Amount Due')
+    # amount_paid = FloatField('Amount Paid')
+    # xray = FileField('X-ray')
+    # submit = SubmitField('Add Patient')
+
+# class PatientForm(FlaskForm):
+#     name = StringField('Name', validators=[DataRequired()])
+#     phone = StringField('Phone', validators=[DataRequired()])
+#     age = IntegerField('Age', validators=[DataRequired()])
+#     diagnosis = StringField('Diagnosis', validators=[DataRequired()])
+#     medicines = StringField('Medicines')
+#     first_visit = DateField('First Visit', validators=[DataRequired()])
+#     next_visit = DateField('Next Visit')
+#     amount_due = FloatField('Amount Due')
+#     amount_paid = FloatField('Amount Paid')
+#     xray = FileField('X-ray')
+#     submit = SubmitField('Add Patient')
     
 class EditPatientForm(FlaskForm):
     name = StringField('Patient Name', validators=[DataRequired()])

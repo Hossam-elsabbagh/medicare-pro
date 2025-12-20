@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  body {
+    background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+    min-height: 100vh;
+  }
+  .signup-card {
+    max-width: 420px;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+    padding: 2.5rem 2rem 2rem 2rem;
+    position: relative;
+    overflow: hidden;
+    /* Animation */
+    opacity: 0;
+    transform: translateY(40px) scale(0.98);
+    animation: signupFadeIn 0.8s cubic-bezier(.4,1.4,.7,1) forwards;
+    border: 1px solid #e3e6f0;
+  }
+  @keyframes signupFadeIn {
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  .signup-title {
+    font-weight: 700;
+    color:  #2563eb;
+    margin-bottom: 1.5rem;
+    letter-spacing: 1px;
+    text-align: center;
+    font-size: 2rem;
+    /* Animation */
+    opacity: 0;
+    animation: titleFadeIn 0.7s 0.3s cubic-bezier(.4,1.4,.7,1) forwards;
+  }
+  @keyframes titleFadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+  .form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.3rem;
+  }
+  .form-control {
+    border-radius: 8px;
+    border: 1px solid #b7e4c7;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #f1f5f9;
+    font-size: 1rem;
+  }
+  .form-control:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px #b7e4c7;
+    background: #fff;
+  }
+  .btn-success {
+    background: linear-gradient(90deg, #2563eb 60%, #1d4ed8 100%);
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 0.6rem 0;
+    transition: background 0.2s, transform 0.15s;
+    width: 100%;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(82,183,136,0.08);
+    /* Animation */
+    opacity: 0;
+    animation: btnFadeIn 0.7s 0.7s cubic-bezier(.4,1.4,.7,1) forwards;
+  }
+  .btn-success:hover {
+    background: linear-gradient(90deg, #1d4ed8 60%, #2563eb 100%);
+    transform: translateY(-2px) scale(1.03);
+  }
+  @keyframes btnFadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+  .already-account {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #6c757d;
+    font-size: 0.97rem;
+    /* Animation */
+    opacity: 0;
+    animation: linkFadeIn 0.7s 1s cubic-bezier(.4,1.4,.7,1) forwards;
+  }
+  @keyframes linkFadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+  .already-account a {
+    color: #2563eb;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .already-account a:hover {
+    color: #1e40af;
+    text-decoration: underline;
+  }
+</style>
+<div class="signup-card">
+  <h2 class="signup-title">Doctor Sign Up</h2>
+  <form method="POST" autocomplete="off">
+    {{ form.hidden_tag() }}
+
+    <div class="form-group mb-3">
+      {{ form.first_name.label(class="form-label") }}
+      {{ form.first_name(class="form-control", placeholder="First Name") }}
+    </div>
+
+    <div class="form-group mb-3">
+      {{ form.last_name.label(class="form-label") }}
+      {{ form.last_name(class="form-control", placeholder="Last Name") }}
+    </div>
+
+    <div class="form-group mb-3">
+      {{ form.email.label(class="form-label") }}
+      {{ form.email(class="form-control", placeholder="Email Address") }}
+    </div>
+
+    <div class="form-group mb-3">
+      {{ form.phone.label(class="form-label") }}
+      {{ form.phone(class="form-control", placeholder="Phone Number") }}
+    </div>
+
+    <div class="form-group mb-4">
+      {{ form.password.label(class="form-label") }}
+      {{ form.password(class="form-control", placeholder="Password") }}
+    </div>
+
+    <div class="form-group">
+      {{ form.submit(class="btn btn-success") }}
+    </div>
+  </form>
+  <div class="already-account">
+    Already have an account? <a href="{{ url_for('login') }}">Log In</a>
+  </div>
+</div>
+{% endblock %}
